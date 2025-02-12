@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,10 +8,19 @@ import Link from 'next/link';
 import { History, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 
 export default function ChatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ChatContent />
+    </Suspense>
+  );
+}
+
+function ChatContent() {
   const router = useRouter();
-  
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +45,7 @@ export default function ChatPage() {
     try {
       setLoading(true);
       const res = await chatApi.getHistory(sessionId);
-      
+
       if (res.code === 0 && res.data?.messages) {
         setMessages(res.data.messages);
       } else {
@@ -47,7 +55,7 @@ export default function ChatPage() {
           description: res.message || '获取历史记录失败',
         });
       }
-    } catch  {
+    } catch {
       toast({
         variant: 'destructive',
         title: '加载失败',
@@ -122,13 +130,9 @@ export default function ChatPage() {
   return (
     <div className='flex flex-col h-[100vh]'>
       <div className='flex items-center justify-between p-4 border-b'>
-        <div className="flex items-center gap-4">
+        <div className='flex items-center gap-4'>
           <h1 className='text-lg font-medium'>AI 助手</h1>
-          <Button 
-            variant='outline' 
-            size='sm'
-            onClick={handleNewChat}
-          >
+          <Button variant='outline' size='sm' onClick={handleNewChat}>
             新对话
           </Button>
         </div>
@@ -141,9 +145,9 @@ export default function ChatPage() {
 
       <div className='flex-1 overflow-y-auto p-4 space-y-4'>
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500">
-            <p className="text-lg mb-2">开始一个新的对话</p>
-            <p className="text-sm">你可以问我任何问题</p>
+          <div className='h-full flex flex-col items-center justify-center text-gray-500'>
+            <p className='text-lg mb-2'>开始一个新的对话</p>
+            <p className='text-sm'>你可以问我任何问题</p>
           </div>
         ) : (
           <>
