@@ -2,52 +2,78 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login } from '@/services/auth';
-import { Message } from '@/components/common/Message';
+import { authApi } from '@/api/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+const formSchema = z.object({
+  username: z.string().min(1, '请输入用户名').trim(),
+  password: z.string().min(6, '密码至少6位').max(20, '密码最多20位'),
+});
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{
-    type: 'success' | 'error';
-    content: string;
-  } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const values = {
-      username: formData.get('username') as string,
-      password: formData.get('password') as string,
-    };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (loading) return;
 
     try {
       setLoading(true);
-      console.log('👨‍🎨', 22);
-      const res = await login(values);
-
-      console.log('👨‍🎨', res);
+      const res = await authApi.login(values);
 
       if (res?.code === 0 && res.data) {
         sessionStorage.setItem('token', res.data.token);
         sessionStorage.setItem('userInfo', JSON.stringify(res.data.user));
-        setMessage({ type: 'success', content: '登录成功' });
 
-        // 直接延迟路由跳转
+        toast({
+          title: '登录成功',
+          description: '正在跳转...',
+          className: 'bg-green-500 text-white',
+        });
+
         setTimeout(() => {
           router.replace('/');
         }, 1000);
       } else {
-        setMessage({
-          type: 'error',
-          content: res?.message || '登录失败',
+        toast({
+          variant: 'destructive',
+          title: '登录失败',
+          description: res?.message || '未知错误',
         });
+        // 清除可能存在的旧数据
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userInfo');
       }
-    } catch (error: any) {
-      setMessage({
-        type: 'error',
-        content: error.message || '网络错误，请稍后重试',
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        description: (error as Error).message || '网络错误，请稍后重试',
+        title: '错误',
       });
+      // 清除可能存在的旧数据
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('userInfo');
     } finally {
@@ -56,53 +82,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className='min-h-screen bg-white p-4 flex flex-col'>
-      <h1 className='text-2xl font-bold text-center my-8'>登录</h1>
+    <>
+      <div className='min-h-screen bg-background p-4 flex flex-col'>
+        <div className='max-w-md w-full mx-auto'>
+          <h1 className='text-2xl font-bold text-center my-8'>登录</h1>
 
-      {message && (
-        <Message
-          type={message.type}
-          content={message.content}
-          onClose={() => setMessage(null)}
-        />
-      )}
-
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <div>
-          <label className='block text-sm font-medium mb-1'>用户名</label>
-          <input
-            type='text'
-            name='username'
-            required
-            className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-            placeholder='请输入用户名'
-          />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              <FormField
+                control={form.control}
+                name='username'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>用户名</FormLabel>
+                    <FormControl>
+                      <Input placeholder='请输入用户名' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>密码</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder='请输入密码'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type='submit'
+                className='w-full'
+                disabled={loading || !form.formState.isValid}
+              >
+                {loading ? '登录中...' : '登录'}
+              </Button>
+            </form>
+          </Form>
         </div>
-
-        <div>
-          <label className='block text-sm font-medium mb-1'>密码</label>
-          <input
-            type='password'
-            name='password'
-            required
-            className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-            placeholder='请输入密码'
-          />
-        </div>
-
-        <button
-          type='submit'
-          disabled={loading}
-          className={`w-full py-2 px-4 rounded-lg text-white font-medium
-            ${
-              loading
-                ? 'bg-blue-300 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'
-            }`}
-        >
-          {loading ? '登录中...' : '登录'}
-        </button>
-      </form>
-    </div>
+      </div>
+      <Toaster />
+    </>
   );
 }
