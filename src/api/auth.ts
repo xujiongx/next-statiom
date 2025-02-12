@@ -34,4 +34,19 @@ export const authApi = {
   getUserInfo: (): Promise<ApiResponse<UserInfo>> => {
     return http.get('/auth/user/info');
   },
+
+  register: (params: {
+    username: string;
+    password: string;
+    nickname: string;
+  }) => {
+    return http.post<{
+      token: string;
+      user: {
+        id: number;
+        username: string;
+        nickname: string;
+      };
+    }>('/auth/register', params);
+  },
 };
