@@ -1,14 +1,35 @@
 import { Mistral, SDKOptions } from '@mistralai/mistralai';
-import { fileStorage } from './fileStorage.service';
 import { config } from '@/config';
 import { Message } from '@/types/chat';
+import { client } from '@/lib/db';
+import { ApiError } from '@/lib/error';
 
-const client = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
+const mistralClient = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
+
+interface DbMessage {
+  id: string;
+  content: string;
+  role: string;
+  timestamp: string;
+}
+
+interface DbConversation {
+  id: string;
+  title: string;
+  messages: DbMessage[];
+  updated_at: string;
+}
 
 export class MistralService {
-  async getMistralResponse(params: { content: string; sessionId: string }) {
+  async getMistralResponse(params: {
+    content: string;
+    sessionId: string;
+    userId: string;
+  }) {
     const { content, sessionId } = params;
-    let messages = await fileStorage.getConversation(sessionId);
+
+    // 获取对话历史
+    const messages: DbMessage[] = await this.getConversationMessages(sessionId);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -16,30 +37,30 @@ export class MistralService {
       content,
       timestamp: new Date().toISOString(),
     };
-    messages.push(userMessage);
+
+    // 保存用户消息
+    await this.saveMessage(sessionId, userMessage);
 
     try {
-      const response = await client.chat.complete({
+      const response = await mistralClient.chat.complete({
         model: config.mistral.model,
         stream: false,
-        messages,
+        messages: [...messages, userMessage],
       });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.choices
-          ? (response.choices[0].message.content as string)
-          : '',
+        content: (response.choices?.[0].message.content as string) || '',
         timestamp: new Date().toISOString(),
       };
-      messages.push(assistantMessage);
 
-      if (messages.length > config.mistral.maxMessages) {
-        messages = messages.slice(-config.mistral.maxMessages);
-      }
+      // 保存助手回复
+      await this.saveMessage(sessionId, assistantMessage);
 
-      await fileStorage.saveConversation(sessionId, messages);
+      // 更新对话时间
+      await this.updateConversationTime(sessionId);
+
       return assistantMessage.content;
     } catch (error) {
       console.error('Mistral API Error:', error);
@@ -47,86 +68,80 @@ export class MistralService {
     }
   }
 
-  async generateCouplet(content: string) {
-    const prompt = `你是一个专业的对联大师。请根据主题"${content}"创作一副优美的对联。要求：
-1. 上下联字数相同，平仄工整
-2. 上下联要意境优美，意象丰富
-3. 横批要与对联主题呼应，简洁有力
-4. 整体要富有文学气息和传统韵味
-5. 严格按照以下JSON格式返回：{"up":"上联内容","down":"下联内容","horizontal":"横批内容"}
-请直接返回JSON数据，不要有任何其他内容。`;
+  private async getConversationMessages(sessionId: string) {
+    const conversation = await client.query<DbConversation>(
+      `
+      select Conversation {
+        id,
+        messages: {
+          content,
+          role,
+          timestamp
+        } order by .timestamp
+      }
+      filter .id = <uuid>$sessionId
+      limit 1
+    `,
+      { sessionId }
+    );
 
-    try {
-      const response = await client.chat.complete({
-        model: config.mistral.model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              '你是一位精通对联创作的文学大师，擅长创作优美、工整、意境深远的对联。',
-          },
-          { role: 'user', content: prompt },
-        ],
-      });
-
-      const cleanContent = (
-        response.choices ? (response.choices[0].message.content as string) : ''
-      )
-        .replace(/```json\s*/g, '')
-        .replace(/```\s*$/g, '')
-        .trim();
-
-      return JSON.parse(cleanContent);
-    } catch (error) {
-      throw new Error('生成对联失败：' + (error as Error).message);
+    if (!conversation) {
+      throw new ApiError('对话不存在', 404);
     }
+
+    return conversation[0].messages;
   }
 
-  async translate(params: { content: string; from?: string; to?: string }) {
-    const { content, from = 'auto', to = 'zh' } = params;
-    const prompt = `请将以下文本从${from}翻译成${to}，直接返回翻译结果，不要有任何解释或额外内容：\n\n${content}`;
-
-    try {
-      const response = await client.chat.complete({
-        model: config.mistral.model,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content: '你是一个专业的翻译器，只返回翻译结果，不做任何解释。',
-          },
-          { role: 'user', content: prompt },
-        ],
-      });
-
-      return {
-        result: (response.choices
-          ? (response.choices[0].message.content as string)
-          : ''
-        ).trim(),
-        from,
-        to,
-      };
-    } catch (error) {
-      throw new Error('翻译失败：' + (error as Error).message);
-    }
+  private async saveMessage(sessionId: string, message: Message) {
+    await client.query(
+      `
+      insert Message {
+        content := <str>$content,
+        role := <str>$role,
+        timestamp := <datetime>$timestamp,
+        conversation := (
+          select Conversation 
+          filter .id = <uuid>$sessionId
+        )
+      }
+    `,
+      {
+        content: message.content,
+        role: message.role,
+        timestamp: message.timestamp,
+        sessionId,
+      }
+    );
   }
 
-  async getLatestConversation() {
-    const conversations = await fileStorage.getConversationList();
-    if (conversations && conversations.length > 0) {
-      const sortedConversations = conversations.sort(
-        (a, b) => parseInt(b.id) - parseInt(a.id)
+  private async updateConversationTime(sessionId: string) {
+    await client.query(
+      `
+      update Conversation
+      filter .id = <uuid>$sessionId
+      set {
+        updated_at := datetime_current()
+      }
+    `,
+      { sessionId }
+    );
+  }
+
+  async getConversationList(userId: string) {
+    try {
+      const conversations = await client.query<DbConversation[]>(
+        `
+        select Conversation {
+          id,
+          title,
+          updated_at
+        }
+        filter .user.id = <uuid>$userId
+        order by .updated_at desc
+      `,
+        { userId }
       );
-      return sortedConversations[0].id;
-    }
-    return null;
-  }
 
-  async getConversationList() {
-    try {
-      const conversations = await fileStorage.getConversationList();
       return {
         code: 0,
         data: {
@@ -134,32 +149,27 @@ export class MistralService {
           total: conversations.length,
         },
       };
-    } catch (error) {
-      throw new Error('获取会话列表失败：' + (error as Error).message);
-    }
-  }
-
-  async getConversationHistory(sessionId: string) {
-    try {
-      const history = await fileStorage.getConversation(sessionId);
-      return {
-        code: 0,
-        data: { messages: history },
-      };
-    } catch (error) {
-      throw new Error('获取会话历史失败：' + (error as Error).message);
+    } catch {
+      throw new ApiError('获取会话列表失败', 500);
     }
   }
 
   async deleteConversation(sessionId: string) {
     try {
-      await fileStorage.deleteConversation(sessionId);
+      await client.query(
+        `
+        delete Conversation
+        filter .id = <uuid>$sessionId
+      `,
+        { sessionId }
+      );
+
       return {
         code: 0,
         message: '删除成功',
       };
-    } catch (error) {
-      throw new Error('删除会话失败：' + (error as Error).message);
+    } catch {
+      throw new ApiError('删除会话失败', 500);
     }
   }
 }

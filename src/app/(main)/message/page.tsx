@@ -12,31 +12,42 @@ export default function MessagePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    let isSubscribed = true;
 
-  const fetchConversations = async () => {
-    try {
-      const res = await messageApi.getMessages();
-      if (res.code === 0) {
-        setConversations(res.data);
-      } else {
+    const fetchConversations = async () => {
+      try {
+        const res = await messageApi.getMessages();
+        if (!isSubscribed) return;
+
+        if (res.code === 0) {
+          setConversations(res.data);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: '获取消息列表失败',
+            description: res.message,
+          });
+        }
+      } catch {
+        if (!isSubscribed) return;
         toast({
           variant: 'destructive',
-          title: '获取消息列表失败',
-          description: res.message,
+          title: '错误',
+          description: '获取消息列表失败，请稍后重试',
         });
+      } finally {
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
-    } catch {
-      toast({
-        variant: 'destructive',
-        title: '错误',
-        description: '获取消息列表失败，请稍后重试',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchConversations();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [toast]);
 
   return (
     <div className='p-4 space-y-4'>

@@ -26,11 +26,11 @@ export const authApi = {
   login: (params: LoginParams): Promise<ApiResponse<LoginResponse>> => {
     return http.post('/auth/login', params);
   },
-  
+
   logout: (): Promise<ApiResponse<null>> => {
     return http.post('/auth/logout');
   },
-  
+
   getUserInfo: (): Promise<ApiResponse<UserInfo>> => {
     return http.get('/auth/user/info');
   },
@@ -48,5 +48,9 @@ export const authApi = {
         nickname: string;
       };
     }>('/auth/register', params);
+  },
+
+  getCurrentUser: (): Promise<ApiResponse<UserInfo>> => {
+    return http.get('/auth/user/me');
   },
 };

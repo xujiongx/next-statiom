@@ -13,6 +13,10 @@ interface DbUser {
   nickname: string;
 }
 
+import { verify } from 'jsonwebtoken';
+
+import { JwtPayload } from '@/lib/auth';
+
 export class AuthService {
   private async findUserByUsername(username: string): Promise<DbUser | null> {
     const users = await client.query<DbUser>(
@@ -93,6 +97,37 @@ export class AuthService {
       },
       JWT_SECRET
     );
+  }
+
+  async getCurrentUser(token: string) {
+    const decoded = verify(token, JWT_SECRET) as JwtPayload;
+    const users = await client.query<DbUser>(
+      `
+      select User {
+        id,
+        username,
+        nickname,
+        created_at
+      }
+      filter .id = <uuid>$userId
+      limit 1
+      `,
+      { userId: decoded.userId }
+    );
+
+    if (!users.length) {
+      throw new ApiError('用户不存在', 404);
+    }
+
+    return this.formatUserResponse(users[0]);
+  }
+
+  async verifyToken(token: string): Promise<JwtPayload> {
+    try {
+      return verify(token, JWT_SECRET) as JwtPayload;
+    } catch {
+      throw new ApiError('无效的 token', 401);
+    }
   }
 }
 

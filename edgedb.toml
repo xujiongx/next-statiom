@@ -5,7 +5,5 @@ server-version = "4.5"
 instance-name = "vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree"
 secret-key = "nbwt1_eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJlZGIuZC5hbGwiOnRydWUsImVkYi5pIjpbInZlcmNlbC1kTmg2bXV1VUpWS2g1Qk1VaWE3d3l3d2ovZWRnZWRiLXllbGxvdy10cmVlIl0sImVkYi5yLmFsbCI6dHJ1ZSwiaWF0IjoxNzM5MzMyMzc5LCJpc3MiOiJhd3MuZWRnZWRiLmNsb3VkIiwianRpIjoiMlktcmR1ajBFZS1aeEJzLW54ZWUyUSIsInN1YiI6IjJSMzdJT2owRWUtZGt3dVVab3oyancifQ.L55lRZtYxUYZbAQt7ReX9a5_OHfS-Rn9QSYbF1VlFUW60S9gzyY-GrAgDGJycRn21rul3dijKjiN_JY1ZOlY3g"
 
-[project]
-name = "next-demo"
-module = "default"
-schema-dir = "dbschema"
+[cloud.tls]
+verify = false
