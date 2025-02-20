@@ -12,7 +12,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, context: RouteParams) {
   return withErrorHandler(async () => {
     const params = await context.params;
-    const result = await mistralService.getConversationHistory(
+    const result = await mistralService.getConversationMessages(
       params.sessionId
     );
     return NextResponse.json(result);

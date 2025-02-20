@@ -6,7 +6,7 @@ import { getUserId } from '@/lib/auth';
 export const GET = (request: Request) => {
   return withErrorHandler(async () => {
     const userId = await getUserId(request);
-    const result = await mistralService.getConversationList(userId);
+    const result = await mistralService.getLatestConversation(userId);
     return NextResponse.json(result);
   });
 };

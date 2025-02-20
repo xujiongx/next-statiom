@@ -32,14 +32,55 @@ function ChatContent() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [initialLoading, setInitialLoading] = useState(true);
+
   useEffect(() => {
-    if (id) {
-      setSessionId(id);
-      loadHistoryMessages(id);
-    } else {
-      setSessionId(Date.now().toString());
-    }
+    const initChat = async () => {
+      try {
+        setInitialLoading(true);
+        if (id) {
+          setSessionId(id);
+          await loadHistoryMessages(id);
+        } else {
+          await loadLatestConversation();
+        }
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: '初始化失败',
+          description: '加载对话失败，请刷新重试',
+        });
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    initChat();
   }, [id]);
+
+  const loadLatestConversation = async () => {
+    try {
+      setLoading(true);
+      const res = await chatApi.getLatestConversation();
+
+      if (res.code === 0 && res.data) {
+        setSessionId(res.data.session_id);
+        loadHistoryMessages(res.data.session_id);
+      } else {
+        // 没有历史对话，创建新会话
+        setSessionId(Date.now().toString());
+      }
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: '加载失败',
+        description: '获取最近对话失败',
+      });
+      setSessionId(Date.now().toString());
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadHistoryMessages = async (sessionId: string) => {
     try {
@@ -144,7 +185,11 @@ function ChatContent() {
       </div>
 
       <div className='flex-1 overflow-y-auto p-4 space-y-4'>
-        {messages.length === 0 ? (
+        {initialLoading ? (
+          <div className='h-full flex flex-col items-center justify-center text-gray-500'>
+            <p className='text-lg mb-2'>加载中...</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className='h-full flex flex-col items-center justify-center text-gray-500'>
             <p className='text-lg mb-2'>开始一个新的对话</p>
             <p className='text-sm'>你可以问我任何问题</p>
@@ -185,9 +230,12 @@ function ChatContent() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder='输入消息...'
-            disabled={loading}
+            disabled={loading || initialLoading}
           />
-          <Button type='submit' disabled={loading || !input.trim()}>
+          <Button
+            type='submit'
+            disabled={loading || initialLoading || !input.trim()}
+          >
             <Send className='h-4 w-4' />
           </Button>
         </div>

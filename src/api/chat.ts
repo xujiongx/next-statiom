@@ -33,6 +33,7 @@ export const chatApi = {
     ApiResponse<{
       conversations: Array<{
         id: string;
+        session_id: string;
         title: string;
         updated_at: string;
       }>;
@@ -44,5 +45,15 @@ export const chatApi = {
   // 删除会话
   deleteConversation: (sessionId: string): Promise<ApiResponse<void>> => {
     return http.delete(`/mistral/conversations/${sessionId}`);
+  },
+  getLatestConversation: (): Promise<
+    ApiResponse<{
+      id: string;
+      session_id: string;
+      title: string;
+      updated_at: string;
+    }>
+  > => {
+    return http.get('/mistral/conversations/latest');
   },
 };

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 
 interface Conversation {
   id: string;
+  session_id: string;
   title: string;
   updated_at: string;
 }
@@ -47,11 +48,13 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (session_id: string) => {
     try {
-      const res = await chatApi.deleteConversation(id);
+      const res = await chatApi.deleteConversation(session_id);
       if (res.code === 0) {
-        setConversations((prev) => prev.filter((conv) => conv.id !== id));
+        setConversations((prev) =>
+          prev.filter((conv) => conv.session_id !== session_id)
+        );
         toast({
           title: '删除成功',
         });
@@ -90,7 +93,10 @@ export default function HistoryPage() {
                 key={conversation.id}
                 className='flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50'
               >
-                <Link href={`/chat?id=${conversation.id}`} className='flex-1'>
+                <Link
+                  href={`/chat?id=${conversation.session_id}`}
+                  className='flex-1'
+                >
                   <h3 className='font-medium line-clamp-1'>
                     {conversation.title}
                   </h3>
@@ -106,7 +112,7 @@ export default function HistoryPage() {
                   size='icon'
                   onClick={(e) => {
                     e.preventDefault();
-                    handleDelete(conversation.id);
+                    handleDelete(conversation.session_id);
                   }}
                 >
                   <Trash2 className='h-4 w-4 text-gray-500' />
