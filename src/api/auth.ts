@@ -6,7 +6,7 @@ export interface LoginParams {
 }
 
 export interface UserInfo {
-  id: number;
+  id?: number;
   username: string;
   nickname?: string;
 }
@@ -35,19 +35,15 @@ export const authApi = {
     return http.get('/auth/user/info');
   },
 
-  register: (params: {
-    username: string;
-    password: string;
-    nickname: string;
-  }) => {
-    return http.post<{
+  register: (
+    params: UserInfo
+  ): Promise<
+    ApiResponse<{
       token: string;
-      user: {
-        id: number;
-        username: string;
-        nickname: string;
-      };
-    }>('/auth/register', params);
+      user: UserInfo;
+    }>
+  > => {
+    return http.post('/auth/register', params);
   },
 
   getCurrentUser: (): Promise<ApiResponse<UserInfo>> => {

@@ -16,7 +16,12 @@ export function middleware(request: NextRequest) {
       if (!token) {
         return NextResponse.json(
           { code: 401, message: '未授权访问' },
-          { status: 401 }
+          { 
+            status: 401,
+            headers: {
+              'X-Redirect': '/login'
+            }
+          }
         );
       }
     }

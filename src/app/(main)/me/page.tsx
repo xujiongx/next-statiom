@@ -2,14 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { authApi } from '@/api/auth';
+import { authApi, UserInfo } from '@/api/auth';
 import { useToast } from '@/components/ui/use-toast';
-
-interface UserInfo {
-  id: number;
-  username: string;
-  nickname?: string;
-}
 
 export default function MePage() {
   const router = useRouter();
@@ -44,7 +38,7 @@ export default function MePage() {
         }
       } catch {
         if (!isSubscribed) return;
-        
+
         toast({
           variant: 'destructive',
           title: '获取用户信息失败',

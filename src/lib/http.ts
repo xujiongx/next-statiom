@@ -22,14 +22,22 @@ http.interceptors.request.use(
 );
 
 http.interceptors.response.use(
-  (response) => {
-    return response.data;
-  },
+  (response) => response.data,
   (error) => {
+    // 处理 401 未授权
+    if (error.response?.status === 401) {
+      sessionStorage.removeItem('token');
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }
+    }
+
+    // 统一错误格式
     return Promise.reject({
+      code: error.response?.status || 500,
       message: error.response?.data?.message || error.message || '网络错误',
-      status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
     });
   }
 );

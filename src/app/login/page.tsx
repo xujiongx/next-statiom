@@ -6,7 +6,6 @@ import { authApi } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { Toaster } from '@/components/ui/toaster';
 import {
   Form,
   FormControl,
@@ -45,7 +44,19 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const api = values.isRegister ? authApi.register : authApi.login;
-      const res = await api(values);
+      // 根据是否为注册请求处理数据
+      const requestData = values.isRegister 
+        ? { 
+            username: values.username,
+            password: values.password,
+            nickname: values.nickname || values.username // 如果没有昵称，使用用户名
+          }
+        : {
+            username: values.username,
+            password: values.password
+          };
+      
+      const res = await api(requestData);
 
       if (res?.code === 0 && res.data) {
         sessionStorage.setItem('token', res.data.token);
@@ -145,7 +156,11 @@ export default function LoginPage() {
               className='w-full'
               disabled={loading || !form.formState.isValid}
             >
-              {loading ? '提交中...' : form.watch('isRegister') ? '注册' : '登录'}
+              {loading
+                ? '提交中...'
+                : form.watch('isRegister')
+                ? '注册'
+                : '登录'}
             </Button>
 
             <div className='text-center'>
