@@ -72,7 +72,7 @@ export default function HistoryPage() {
     <div className='flex flex-col h-[100vh]'>
       <div className='flex items-center gap-2 p-4 border-b'>
         <Button variant='ghost' size='icon' asChild>
-          <Link href='/chat'>
+          <Link href='/subpackages/chat'>
             <ArrowLeft className='h-5 w-5' />
           </Link>
         </Button>

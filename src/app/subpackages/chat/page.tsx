@@ -9,6 +9,7 @@ import { History, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 export default function ChatPage() {
   return (
@@ -157,7 +158,7 @@ function ChatContent() {
   const handleNewChat = () => {
     setMessages([]); // 清空消息列表
     setSessionId(Date.now().toString()); // 生成新的会话 ID
-    router.push('/chat');
+    router.push('/subpackages/chat');
   };
 
   const scrollToBottom = () => {
@@ -178,7 +179,7 @@ function ChatContent() {
           </Button>
         </div>
         <Button variant='ghost' size='icon' asChild>
-          <Link href='/chat/history'>
+          <Link href='/subpackages/chat/history'>
             <History className='h-5 w-5' />
           </Link>
         </Button>
@@ -210,7 +211,66 @@ function ChatContent() {
                       : 'bg-gray-100'
                   }`}
                 >
-                  {message.content}
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown 
+                      components={{
+                        pre: ({ children }) => (
+                          <div style={{ 
+                            overflow: 'auto', 
+                            borderRadius: '0.5rem',
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                            padding: '0.5rem',
+                            margin: '0.5rem 0'
+                          }}>
+                            {children}
+                          </div>
+                        ),
+                        code: ({ _node, inline, children, ...props }) => {
+                          if (inline) {
+                            return (
+                              <code style={{ 
+                                backgroundColor: 'rgba(0,0,0,0.05)',
+                                borderRadius: '0.25rem',
+                                padding: '0 0.25rem'
+                              }} {...props}>
+                                {children}
+                              </code>
+                            );
+                          }
+                          return (
+                            <code style={{ display: 'block', fontSize: '0.875rem' }} {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                        p: ({ children }) => (
+                          <p style={{ marginBottom: '0.5rem' }}>{children}</p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul style={{ 
+                            listStyleType: 'disc',
+                            paddingLeft: '1rem',
+                            marginBottom: '0.5rem'
+                          }}>
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ul style={{ 
+                            listStyleType: 'decimal',
+                            paddingLeft: '1rem',
+                            marginBottom: '0.5rem'
+                          }}>
+                            {children}
+                          </ul>
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : (
+                    message.content
+                  )}
                 </div>
               </div>
             ))}

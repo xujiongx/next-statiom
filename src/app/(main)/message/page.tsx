@@ -51,8 +51,6 @@ export default function MessagePage() {
 
   return (
     <div className='p-4 space-y-4'>
-      <h1 className='text-xl font-bold'>消息列表</h1>
-
       {loading ? (
         <div className='space-y-3'>
           {[...Array(3)].map((_, i) => (

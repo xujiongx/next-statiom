@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { authApi, UserInfo } from '@/api/auth';
 import { useToast } from '@/components/ui/use-toast';
 
+
 export default function MePage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -65,13 +66,16 @@ export default function MePage() {
     router.push('/login');
   };
 
-  if (loading) return <div className='p-4'>加载中...</div>;
+  if (loading) return (
+    <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="text-muted-foreground">加载中...</div>
+    </div>
+  );
+
   if (!userInfo) return null;
 
   return (
     <div className='p-4 space-y-6'>
-      <h1 className='text-xl font-bold'>个人中心</h1>
-
       <div className='bg-white rounded-lg p-4 space-y-4'>
         <div className='flex items-center space-x-4'>
           <div className='w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center'>

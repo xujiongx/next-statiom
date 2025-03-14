@@ -8,7 +8,7 @@ export const client = createClient({
   dsn: process.env.EDGEDB_INSTANCE,
   secretKey: process.env.EDGEDB_SECRET_KEY,
   tlsSecurity: "strict",
-  timeout: 10000,
+  timeout: 100000,
 });
 
 // 测试连接
