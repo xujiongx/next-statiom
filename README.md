@@ -29,3 +29,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
 edgedb cloud login
 edgedb migration create -I vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree
 edgedb migrate -I vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree
+
+
+域名
+https://dash.cloudflare.com/sign-up 代理

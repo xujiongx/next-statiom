@@ -225,8 +225,9 @@ function ChatContent() {
                             {children}
                           </div>
                         ),
-                        code: ({ _node, inline, children, ...props }) => {
-                          if (inline) {
+                        code: ({ className, children, ...props }) => {
+                          const isInline = !className?.includes('language-');
+                          if (isInline) {
                             return (
                               <code style={{ 
                                 backgroundColor: 'rgba(0,0,0,0.05)',
@@ -238,9 +239,18 @@ function ChatContent() {
                             );
                           }
                           return (
-                            <code style={{ display: 'block', fontSize: '0.875rem' }} {...props}>
-                              {children}
-                            </code>
+                            <pre style={{ 
+                              backgroundColor: 'rgba(0,0,0,0.05)',
+                              borderRadius: '0.5rem',
+                              padding: '0.75rem',
+                              overflowX: 'auto',
+                              fontSize: '0.875rem',
+                              lineHeight: '1.5'
+                            }}>
+                              <code {...props}>
+                                {children}
+                              </code>
+                            </pre>
                           );
                         },
                         p: ({ children }) => (
