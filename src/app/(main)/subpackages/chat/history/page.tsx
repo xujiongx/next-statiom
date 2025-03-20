@@ -94,7 +94,7 @@ export default function HistoryPage() {
                 className='flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50'
               >
                 <Link
-                  href={`/chat?id=${conversation.session_id}`}
+                  href={`/subpackages/chat?id=${conversation.session_id}`}
                   className='flex-1'
                 >
                   <h3 className='font-medium line-clamp-1'>
