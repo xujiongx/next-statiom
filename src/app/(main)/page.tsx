@@ -19,7 +19,7 @@ const tools = [
     title: '图片处理',
     description: '智能图片编辑与优化',
     icon: Image,
-    href: '/image',
+    href: '/subpackages/image',
   },
   {
     title: '趣味游戏',

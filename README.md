@@ -33,3 +33,7 @@ edgedb migrate -I vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree
 
 域名
 https://dash.cloudflare.com/sign-up 代理
+
+
+## 免费API
+- https://github.com/public-apis/public-apis?tab=readme-ov-file#art--design

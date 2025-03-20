@@ -44,19 +44,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const api = values.isRegister ? authApi.register : authApi.login;
-      // 根据是否为注册请求处理数据
-      const requestData = values.isRegister 
-        ? { 
-            username: values.username,
-            password: values.password,
-            nickname: values.nickname || values.username // 如果没有昵称，使用用户名
-          }
-        : {
-            username: values.username,
-            password: values.password
-          };
-      
-      const res = await api(requestData);
+      const res = await api(values);
 
       if (res?.code === 0 && res.data) {
         sessionStorage.setItem('token', res.data.token);
