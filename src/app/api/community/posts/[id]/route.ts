@@ -1,17 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { withErrorHandler } from '@/lib/api';
 import { communityService } from '@/server/services/community.service';
 
-export const GET = (
-  request: NextRequest,
-  context: { params: { id: string } }
-) => {
+interface RouteParams {
+  params: Promise<{
+    id: string;
+  }>;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export async function GET(request: NextRequest, context: RouteParams) {
   return withErrorHandler(async () => {
-    const params = await context.params
-    const id = params.id
-    console.log('🤤', id)
+    const params = await context.params;
+    const { id } = params;
     if (!id) {
-      return NextResponse.json(
+      return Response.json(
         {
           code: 400,
           message: '帖子ID不能为空',
@@ -22,9 +25,9 @@ export const GET = (
 
     const post = await communityService.getPostById(id);
 
-    return NextResponse.json({
+    return Response.json({
       code: 0,
       data: post,
     });
   });
-};
+}
