@@ -13,6 +13,8 @@ export interface Post {
   content: string;
   created_at: string;
   view_count: number;
+  like_count: number;
+  is_liked: boolean;
   tags: string[];
   author: Author;
   comments: unknown[];

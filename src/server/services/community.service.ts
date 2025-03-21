@@ -15,6 +15,7 @@ interface PostFilter {
   page?: number;
   limit?: number;
   sortBy?: 'latest' | 'popular';
+  userId?: string;
 }
 
 // 评论相关接口
@@ -102,7 +103,14 @@ export class CommunityService {
 
   // 获取帖子列表
   async getPosts(filter: PostFilter = {}) {
-    const { tag, authorId, page = 1, limit = 10, sortBy = 'latest' } = filter;
+    const {
+      tag,
+      authorId,
+      page = 1,
+      limit = 10,
+      sortBy = 'latest',
+      userId,
+    } = filter;
     const offset = (page - 1) * limit;
 
     let query = `
@@ -124,7 +132,13 @@ export class CommunityService {
         }
     `;
 
-    const params: Record<string, unknown> = { limit, offset };
+    const params: Record<string, unknown> = {
+      limit,
+      offset,
+      ...(tag && { tag }),
+      ...(authorId && { authorId }),
+      ...(userId && { userId }),
+    };
 
     // 添加过滤条件
     if (tag) {
@@ -159,7 +173,12 @@ export class CommunityService {
           nickname,
         },
         comment_count := count(.comments),
-        like_count := count(.likes)
+        like_count := count(.likes),
+        is_liked := <bool>(
+          exists (
+            select .likes filter .id = <uuid>$userId
+          )
+        )
       }
       offset <int64>$offset
       limit <int64>$limit
@@ -178,7 +197,9 @@ export class CommunityService {
       }
 
       if (authorId) {
-        countQuery += `${tag ? ' and' : ' filter'} .author.id = <uuid>$authorId`;
+        countQuery += `${
+          tag ? ' and' : ' filter'
+        } .author.id = <uuid>$authorId`;
         countParams.authorId = authorId;
       }
 
@@ -333,48 +354,68 @@ export class CommunityService {
 
     try {
       // 检查是否已点赞
-      const existingLikes = await client.query(
-        `
-        select PostLike {
-          id
+      const existingLikes: { id: string; has_liked: boolean }[] =
+        await client.query(
+          `
+        select community::Post {
+          id,
+          has_liked := <uuid>$userId in .likes.id
         }
-        filter 
-          .post.id = <uuid>$postId and
-          .user.id = <uuid>$userId
+        filter .id = <uuid>$postId
         limit 1
         `,
-        { postId, userId }
-      );
+          { postId, userId }
+        );
 
-      if (existingLikes.length > 0) {
+      if (existingLikes.length > 0 && existingLikes[0]?.has_liked) {
         // 已点赞，取消点赞
         await client.query(
           `
-          delete PostLike
-          filter 
-            .post.id = <uuid>$postId and
-            .user.id = <uuid>$userId
+          update community::Post
+          filter .id = <uuid>$postId
+          set {
+            likes -= (
+              select default::User
+              filter .id = <uuid>$userId
+            )
+          }
           `,
           { postId, userId }
         );
         return { liked: false };
       } else {
         // 未点赞，添加点赞
-        await client.query(
+        const result = await client.query(
           `
-          with 
-            user := (select User filter .id = <uuid>$userId limit 1),
-            post := (select Post filter .id = <uuid>$postId limit 1)
-          insert PostLike {
-            user := user,
-            post := post
+          update community::Post
+          filter .id = <uuid>$postId
+          set {
+            likes += (
+              select default::User
+              filter .id = <uuid>$userId
+            )
           }
           `,
           { postId, userId }
         );
+
+        if (!result.length) {
+          throw new ApiError('点赞失败', 500);
+        }
+
         return { liked: true };
       }
-    } catch {
+    } catch (error) {
+      console.error('点赞操作错误:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      // 处理EdgeDB特定错误
+      if (error instanceof Error) {
+        if (error.message.includes('InvalidReferenceError')) {
+          throw new ApiError('用户或帖子不存在', 400);
+        }
+      }
       throw new ApiError('操作失败', 500);
     }
   }

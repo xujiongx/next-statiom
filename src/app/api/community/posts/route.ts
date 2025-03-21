@@ -6,6 +6,7 @@ import { getUserId } from '@/lib/auth';
 // 获取帖子列表
 export const GET = (request: NextRequest) => {
   return withErrorHandler(async () => {
+    const userId = await getUserId(request);
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -18,6 +19,7 @@ export const GET = (request: NextRequest) => {
       limit,
       tag,
       sortBy: sortBy as 'latest' | 'popular',
+      userId,
     });
 
     return NextResponse.json({

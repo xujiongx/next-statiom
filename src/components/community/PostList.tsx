@@ -10,26 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '../ui/badge';
-import { communityApi } from '@/api/community';
+import { communityApi, Post } from '@/api/community';
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  view_count: number;
-  tags: string[];
-  author: {
-    id: string;
-    nickname: string;
-    image: string;
-  };
-  comments: unknown[];
-  likes: unknown[];
-}
+
 
 interface PostListProps {
-  sortBy?: string;
+  sortBy?: 'latest' | 'popular' | undefined;
   filter?: string;
   tag?: string;
 }
@@ -113,6 +99,28 @@ export default function PostList({
     );
   }
 
+  const handleLike = async (postId: string) => {
+
+    try {
+      await communityApi.toggleLike(postId);
+      // 重新获取帖子列表以更新点赞状态
+      const data = await communityApi.getPosts({ sort: sortBy , tag, filter });
+      setPosts(data.data.posts);
+
+      toast({
+        title: '操作成功',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('点赞失败:', error);
+      toast({
+        title: '点赞失败',
+        description: '请稍后重试',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className='space-y-6'>
       {posts.map((post) => (
@@ -120,7 +128,10 @@ export default function PostList({
           key={post.id}
           className='bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-all hover:shadow-md'
         >
-          <Link href={`/subpackages/community/detail/${post.id}`} className='block'>
+          <Link
+            href={`/subpackages/community/detail/${post.id}`}
+            className='block'
+          >
             <h3 className='text-xl font-semibold mb-2 hover:text-blue-600 dark:hover:text-blue-400'>
               {post.title}
             </h3>
@@ -147,14 +158,9 @@ export default function PostList({
 
           <div className='flex justify-between items-center'>
             <div className='flex items-center'>
-              {/* <div className="relative h-8 w-8 rounded-full overflow-hidden mr-2">
-                <Image
-                  src={post.author.image}
-                  alt={post.author.name}
-                  fill
-                  className="object-cover"
-                />
-              </div> */}
+              <div className='flex items-center justify-center h-8 w-8 rounded-full bg-blue-500 text-white mr-2'>
+                {post.author.nickname.charAt(0)}
+              </div>
               <span className='text-sm text-gray-600 dark:text-gray-400'>
                 {post.author.nickname} ·
                 {formatDistanceToNow(new Date(post.created_at), {
@@ -169,9 +175,14 @@ export default function PostList({
                 <Eye className='h-4 w-4 mr-1' />
                 <span>{post.view_count}</span>
               </div>
-              <div className='flex items-center'>
-                <Heart className='h-4 w-4 mr-1' />
-                <span>{post.likes?.length}</span>
+              <div
+                className='flex items-center cursor-pointer'
+                onClick={() => handleLike(post.id)}
+              >
+                <Heart 
+                  className={`h-4 w-4 mr-1 ${post.is_liked ? 'fill-current text-blue-500' : ''}`} 
+                />
+                <span>{post.like_count}</span>
               </div>
               <div className='flex items-center'>
                 <MessageSquare className='h-4 w-4 mr-1' />
