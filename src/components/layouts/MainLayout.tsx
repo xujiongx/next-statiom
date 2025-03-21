@@ -11,11 +11,18 @@ export default function MainLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  const gridColsMap: Record<number, string> = {
+    3: 'grid-cols-3',
+    4: 'grid-cols-4',
+    5: 'grid-cols-5',
+  };
+  const gridColsClass = gridColsMap[TABS.length] || 'grid-cols-4';
+
   return (
     <div className='min-h-screen flex flex-col'>
       <main className='flex-1 pb-20'>{children}</main>
       <nav className='fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200'>
-        <div className='h-14 grid grid-cols-3'>
+        <div className={`h-14 grid ${gridColsClass}`}>
           {TABS.map(({ key, title, icon: Icon }) => (
             <button
               key={key}
