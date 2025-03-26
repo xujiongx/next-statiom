@@ -59,7 +59,7 @@ function PostDetailContent() {
   const router = useRouter();
 
   const handleEdit = () => {
-    router.push(`/community/edit/${postId}`);
+    router.replace(`/subpackages/community/edit/${postId}`);
   };
 
   const handleDelete = async () => {

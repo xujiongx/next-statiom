@@ -43,6 +43,11 @@ export const communityApi = {
     return http.post('/community/posts', params);
   },
 
+  // 更新帖子
+  updatePost: (id: string, params: CreatePostParams): Promise<ApiResponse<Post>> => {
+    return http.put(`/community/posts/${id}`, params);
+  },
+
   // 获取帖子详情
   getPostById: (id: string): Promise<ApiResponse<Post>> => {
     return http.get(`/community/posts/${id}`);

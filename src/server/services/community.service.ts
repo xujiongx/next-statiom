@@ -1,7 +1,7 @@
 import { getServerSession } from '@/lib/auth';
 import { client } from '@/lib/db';
 import { ApiError } from '@/lib/error';
-import { MyComment } from '@/types/community';
+import { MyComment, Post } from '@/types/community';
 
 interface QueryResult {
   total: number;
@@ -36,6 +36,14 @@ interface CreateCommentParams {
 interface LikeParams {
   postId: string;
   userId: string;
+}
+
+interface UpdatePostParams {
+  postId: string;
+  userId: string;
+  title: string;
+  content: string;
+  tags: string[];
 }
 
 export class CommunityService {
@@ -633,6 +641,59 @@ export class CommunityService {
     } catch (error) {
       console.error('获取社区统计数据错误:', error);
       throw new ApiError('获取社区统计数据失败', 500);
+    }
+  }
+  async updatePost(params: UpdatePostParams) {
+    const { postId, userId, title, content, tags } = params;
+
+    try {
+      // 检查帖子是否存在且属于当前用户
+      const existingPost: Post[] = await client.query(
+        `
+      select community::Post {
+        id,
+        author: { id }
+      }
+      filter .id = <uuid>$postId
+      limit 1
+      `,
+        { postId }
+      );
+
+      if (!existingPost.length) {
+        throw new ApiError('帖子不存在', 404);
+      }
+
+      if (existingPost[0].author.id !== userId) {
+        throw new ApiError('无权限修改此帖子', 403);
+      }
+
+      // 更新帖子
+      const result = await client.query(
+        `
+      update community::Post
+      filter .id = <uuid>$postId
+      set {
+        title := <str>$title,
+        content := <str>$content,
+        tags := <array<str>>$tags,
+        updated_at := datetime_current()
+      }
+      `,
+        { postId, title, content, tags }
+      );
+
+      if (!result.length) {
+        throw new ApiError('更新帖子失败', 500);
+      }
+
+      return result[0];
+    } catch (error) {
+      console.error('更新帖子错误:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('更新帖子失败', 500);
     }
   }
 }

@@ -35,6 +35,62 @@ export async function GET(request: NextRequest, context: RouteParams) {
   });
 }
 
+// 更新帖子
+export async function PUT(request: NextRequest, context: RouteParams) {
+  return withErrorHandler(async () => {
+    const params = await context.params;
+    const { id } = params;
+    if (!id) {
+      return Response.json(
+        {
+          code: 400,
+          message: '帖子ID不能为空',
+        },
+        { status: 400 }
+      );
+    }
+
+    // 获取当前登录用户
+    const session = await getServerSession();
+    if (!session?.user) {
+      return Response.json(
+        {
+          code: 401,
+          message: '请先登录',
+        },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { title, content, tags } = body;
+
+    if (!title?.trim() || !content?.trim()) {
+      return Response.json(
+        {
+          code: 400,
+          message: '标题和内容不能为空',
+        },
+        { status: 400 }
+      );
+    }
+
+    const post = await communityService.updatePost({
+      postId: id,
+      userId: session.user.id,
+      title: title.trim(),
+      content: content.trim(),
+      tags: tags || [],
+    });
+
+    return Response.json({
+      code: 0,
+      data: post,
+      message: '更新成功',
+    });
+  });
+}
+
 export async function DELETE(request: NextRequest, context: RouteParams) {
   try {
     const params = await context.params;
