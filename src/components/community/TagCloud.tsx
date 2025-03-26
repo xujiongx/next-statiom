@@ -52,7 +52,7 @@ export default function TagCloud() {
           className='hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
         >
           <Link
-            href={`/subpackages/community/tags/community/tag/${encodeURIComponent(
+            href={`/subpackages/community/tag/${encodeURIComponent(
               tag.name
             )}`}
             className='flex items-center'
