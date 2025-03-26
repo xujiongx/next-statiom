@@ -129,6 +129,36 @@ export class AuthService {
       throw new ApiError('无效的 token', 401);
     }
   }
+
+  // 新增方法：根据 token 获取用户信息
+  async getUserByToken(token: string): Promise<User> {
+    try {
+      const decoded = verify(token, JWT_SECRET) as JwtPayload;
+      const users = await client.query<DbUser>(
+        `
+        select User {
+          id,
+          username,
+          nickname
+        }
+        filter .id = <uuid>$userId
+        limit 1
+        `,
+        { userId: decoded.userId }
+      );
+
+      if (!users.length) {
+        throw new ApiError('用户不存在', 404);
+      }
+
+      return this.formatUserResponse(users[0]);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('无效的 token', 401);
+    }
+  }
 }
 
 export const authService = new AuthService();

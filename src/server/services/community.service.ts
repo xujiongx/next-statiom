@@ -1,6 +1,12 @@
+import { getServerSession } from '@/lib/auth';
 import { client } from '@/lib/db';
 import { ApiError } from '@/lib/error';
+import { MyComment } from '@/types/community';
 
+interface QueryResult {
+  total: number;
+  comments: MyComment[];
+}
 // 帖子相关接口
 interface CreatePostParams {
   title: string;
@@ -14,7 +20,7 @@ interface PostFilter {
   authorId?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'latest' | 'popular';
+  sortBy?: 'latest' | 'popular' | 'following';
   userId?: string;
 }
 
@@ -111,10 +117,43 @@ export class CommunityService {
       sortBy = 'latest',
       userId,
     } = filter;
+
+    console.log('🕵️‍♂️', filter);
     const offset = (page - 1) * limit;
 
-    let query = `
-      with posts := (
+    // 修改参数传递方式
+    const params: Record<string, unknown> = {
+      offset,
+      limit,
+      ...(userId && { userId }),
+      ...(tag && { tag }),
+      ...(authorId && { authorId }),
+    };
+
+    const filterConditions = [];
+    if (tag) {
+      filterConditions.push('contains(.tags, <str>$tag)');
+    }
+    if (authorId) {
+      filterConditions.push('.author.id = <uuid>$authorId');
+    }
+    // 修改点赞筛选逻辑
+    if (sortBy === 'following' && userId) {
+      filterConditions.push('<uuid>$userId in .likes.id');
+    }
+
+    const filterClause = filterConditions.length
+      ? ` filter ${filterConditions.join(' and ')}`
+      : '';
+
+    // 修改排序逻辑
+    const orderClause =
+      sortBy === 'popular'
+        ? ' order by (count(.likes) * 2 + count(.comments) * 3 + .view_count) desc then .created_at desc'
+        : ' order by .created_at desc';
+
+    const query = `
+      with post := (
         select community::Post {
           id,
           title,
@@ -127,40 +166,18 @@ export class CommunityService {
             username,
             nickname,
           },
-          comments: { id } limit 100,
-          likes: { id } limit 100
-        }
-    `;
-
-    const params: Record<string, unknown> = {
-      limit,
-      offset,
-      ...(tag && { tag }),
-      ...(authorId && { authorId }),
-      ...(userId && { userId }),
-    };
-
-    // 添加过滤条件
-    if (tag) {
-      query += ` filter <str>$tag in .tags`;
-      params.tag = tag;
-    }
-
-    if (authorId) {
-      query += `${tag ? ' and' : ' filter'} .author.id = <uuid>$authorId`;
-      params.authorId = authorId;
-    }
-
-    // 添加排序
-    if (sortBy === 'latest') {
-      query += ` order by .created_at desc`;
-    } else if (sortBy === 'popular') {
-      query += ` order by .view_count desc`;
-    }
-
-    query += `
+          comments: { id },
+          likes: { id },
+          score := (
+            count(.likes) * 2 +
+            count(.comments) * 3 +
+            .view_count
+          )
+        }${filterClause}${orderClause}
+        offset <int64>$offset
+        limit <int64>$limit
       )
-      select posts {
+      select post {
         id,
         title,
         content,
@@ -173,40 +190,57 @@ export class CommunityService {
           nickname,
         },
         comment_count := count(.comments),
+        new_comment := (
+          select .comments {
+            id,
+            content,
+            created_at,
+            author: {
+              id,
+              username,
+              nickname
+            }
+          } 
+          order by .created_at desc
+          limit 1
+        ),
         like_count := count(.likes),
-        is_liked := <bool>(
-          exists (
-            select .likes filter .id = <uuid>$userId
-          )
-        )
+        is_liked := <bool>(exists (
+          select .likes filter .id = <uuid>$userId
+        ))
       }
-      offset <int64>$offset
-      limit <int64>$limit
     `;
 
     try {
       const posts = await client.query(query, params);
 
-      // 修复计数查询，只在有过滤条件时传递参数
-      let countQuery = `select count(community::Post)`;
-      const countParams: Record<string, unknown> = {};
+      // 修改计数查询和参数
+      const countQuery = `
+        with post := (
+          select community::Post {
+            id
+          }${filterClause}
+        )
+        select count(post)
+      `;
 
+      // 只传递过滤条件需要的参数
+      const countParams: Record<string, unknown> = {};
       if (tag) {
-        countQuery += ` filter <str>$tag in .tags`;
         countParams.tag = tag;
       }
-
       if (authorId) {
-        countQuery += `${
-          tag ? ' and' : ' filter'
-        } .author.id = <uuid>$authorId`;
         countParams.authorId = authorId;
+      }
+      if (sortBy === 'following' && userId) {
+        countParams.userId = userId;
       }
 
       const countResult = await client.query(
         countQuery,
         Object.keys(countParams).length > 0 ? countParams : undefined
       );
+
       const total = (countResult[0] || 0) as number;
 
       return {
@@ -226,6 +260,10 @@ export class CommunityService {
 
   // 获取单个帖子详情
   async getPostById(postId: string) {
+    const session = await getServerSession();
+    console.log('👩', session?.user?.id);
+    const userId = session?.user?.id;
+
     try {
       const posts = await client.query(
         `
@@ -262,12 +300,18 @@ export class CommunityService {
           } order by .created_at desc,
           likes: {
             id
-          }
+          },
+          like_count := count(.likes),
+          is_liked := <bool>(
+          exists (
+            select .likes filter .id = <uuid>$userId
+          )
+        )
         }
         filter .id = <uuid>$postId
         limit 1
         `,
-        { postId }
+        { postId, userId }
       );
 
       if (!posts.length) {
@@ -305,44 +349,72 @@ export class CommunityService {
     }
 
     try {
-      let query = `
+      const query = `
         with 
-          user := (select User filter .id = <uuid>$userId limit 1),
-          post := (select Post filter .id = <uuid>$postId limit 1)
-      `;
-
-      const queryParams: Record<string, unknown> = {
-        postId,
-        content,
-        userId,
-      };
-
-      if (parentId) {
-        query += `,
-          parent := (select Comment filter .id = <uuid>$parentId limit 1)
-        `;
-        queryParams.parentId = parentId;
-      }
-
-      query += `
-        insert Comment {
-          content := <str>$content,
-          author := user,
-          post := post
-          ${parentId ? ', parent_comment := parent' : ''}
+          user := (select default::User filter .id = <uuid>$userId limit 1),
+          post := (select community::Post filter .id = <uuid>$postId limit 1),
+          comment := (
+            insert community::Comment {
+              content := <str>$content,
+              author := user,
+              post := post
+              ${
+                parentId
+                  ? ', parent_comment := (select detached community::Comment filter .id = <uuid>$parentId limit 1)'
+                  : ''
+              }
+            }
+          )
+        select (
+          update post
+          set {
+            comments += comment
+          }
+        ) {
+          comments: {
+            id,
+            content,
+            created_at,
+            author: {
+              id,
+              username,
+              nickname
+            },
+            parent_comment: {
+              id,
+              author: {
+                id,
+                username,
+                nickname
+              },
+              content,
+              created_at,
+            }
+          } filter .id = comment.id
         }
       `;
 
-      const comments = await client.query(query, queryParams);
+      const result: { comments: MyComment[] }[] = await client.query(query, {
+        postId,
+        content,
+        userId,
+        ...(parentId && { parentId }),
+      });
 
-      if (!comments.length) {
+      if (!result.length || !result[0].comments.length) {
         throw new ApiError('添加评论失败', 500);
       }
 
-      return comments[0];
+      return result[0].comments[0];
     } catch (error) {
+      console.error('添加评论错误:', error);
       if (error instanceof ApiError) {
         throw error;
+      }
+      if (error instanceof Error) {
+        if (error.message.includes('InvalidReferenceError')) {
+          throw new ApiError('用户或帖子不存在', 400);
+        }
       }
       throw new ApiError('添加评论失败', 500);
     }
@@ -423,25 +495,24 @@ export class CommunityService {
   // 获取热门标签
   async getPopularTags(limit: number = 10) {
     try {
-      // 这里需要根据实际数据库结构调整查询
-      // 以下是一个示例实现
       const tags = await client.query(
         `
-        with 
-          all_tags := (
-            select Post.tags
-          ),
-          flattened_tags := (
-            select array_unpack(all_tags)
-          ),
-          tag_counts := (
-            select flattened_tags, count(flattened_tags)
-            group by flattened_tags
+        select (
+          with 
+            all_tags := (
+              select array_unpack(community::Post.tags)
+            ),
+            distinct_tags := (
+              select distinct all_tags
+            )
+          for tag in distinct_tags
+          union (
+            select {
+              name := tag,
+              count := count(all_tags filter all_tags = tag)
+            }
           )
-        select {
-          name := tag_counts.flattened_tags,
-          count := tag_counts.count
-        }
+        )
         order by .count desc
         limit <int64>$limit
         `,
@@ -449,8 +520,119 @@ export class CommunityService {
       );
 
       return tags;
-    } catch {
+    } catch (error) {
+      console.error('获取热门标签错误:', error);
       throw new ApiError('获取热门标签失败', 500);
+    }
+  }
+
+  // 获取帖子评论
+  async getPostComments(postId: string, page: number = 1, limit: number = 10) {
+    try {
+      const offset = (page - 1) * limit;
+
+      const result = await client.query<QueryResult>(
+        `
+        with post := (
+          select community::Post 
+          filter .id = <uuid>$postId
+          limit 1
+        )
+        select {
+          total := count(post.comments),
+          comments := (
+            select post.comments {
+              id,
+              content,
+              created_at,
+              author: {
+                id,
+                username,
+                nickname
+              },
+              parent_comment: {
+                id,
+                author: {
+                  id,
+                  username,
+                  nickname
+                },
+                content,
+                created_at
+              }
+            }
+            order by .created_at desc
+            offset <int64>$offset
+            limit <int64>$limit
+          )
+        }
+        `,
+        { postId, offset, limit }
+      );
+
+      if (!result.length) {
+        return {
+          comments: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+
+      const { comments, total } = result[0];
+
+      return {
+        comments,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error('获取帖子评论错误:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('获取帖子评论失败', 500);
+    }
+  }
+  // 获取社区统计数据
+  async getCommunityStats() {
+    try {
+      // 获取一周前的日期
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // 直接传递 Date 对象，而不是转换为字符串
+      const stats = await client.query(
+        `
+        with
+          total_users := (select count(default::User)),
+          total_posts := (select count(community::Post)),
+          active_users_this_week := (
+            select count(
+              distinct community::Post.author.id
+            )
+              filter community::Post.created_at >= <datetime>$oneWeekAgo
+          )
+        select {
+          total_users := total_users,
+          total_posts := total_posts,
+          active_users_this_week := active_users_this_week
+        }
+      `,
+        { oneWeekAgo }
+      );
+
+      return stats[0];
+    } catch (error) {
+      console.error('获取社区统计数据错误:', error);
+      throw new ApiError('获取社区统计数据失败', 500);
     }
   }
 }

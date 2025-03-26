@@ -6,7 +6,7 @@ export interface LoginParams {
 }
 
 export interface UserInfo {
-  id?: number;
+  id?: string;
   username: string;
   nickname?: string;
 }
@@ -20,6 +20,11 @@ export interface ApiResponse<T> {
   code: number;
   message?: string;
   data: T;
+}
+
+export interface SessionResponse {
+  user: UserInfo | null;
+  expires: string;
 }
 
 export const authApi = {
@@ -48,5 +53,10 @@ export const authApi = {
 
   getCurrentUser: (): Promise<ApiResponse<UserInfo>> => {
     return http.get('/auth/user/me');
+  },
+  
+  // 新增获取会话信息接口
+  getSession: (): Promise<ApiResponse<SessionResponse>> => {
+    return http.get('/auth/session');
   },
 };

@@ -1,111 +1,175 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
-import { MessageSquare, Heart, Eye } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
-import { communityApi, Post } from '@/api/community';
+import { MyComment } from '@/types/community';
+import { usePostDetail } from '@/hooks/usePostDetail';
+import { PostDetail } from '../components/PostDetail';
+import { CommentsList } from '../components/CommentsList';
+import { CommentForm } from '../components/CommentForm';
+import { useLikePost } from '@/hooks/useLikePost';
 
-export default function PostDetail() {
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
+import { communityApi } from '@/api/community';
+import { PostActions } from '../components/PostActions';
+import { useAuth } from '@/hooks/useAuth';
+
+function PostDetailContent() {
+  const [page, setPage] = useState(1);
   const params = useParams();
-  const { toast } = useToast();
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
+  const postId = params.id as string;
+  const {
+    post,
+    loading,
+    fetchPost,
+    comments,
+    loadingComments,
+    fetchComments,
+    total, // 添加 total
+  } = usePostDetail(postId);
+  const [replyTo, setReplyTo] = useState<{
+    id: string;
+    nickname: string;
+  } | null>(null);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const { user } = useAuth();
+  const handleReply = (comment: MyComment) => {
+    setReplyTo({
+      id: comment.id,
+      nickname: comment.author.nickname,
+    });
+    setShowCommentForm(true);
+  };
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const { data } = await communityApi.getPostById(params.id as string);
-        setPost(data);
-      } catch (error) {
-        console.error('Error fetching post:', error);
-        toast({
-          title: '获取文章详情失败',
-          description: '请稍后再试',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleCancelReply = () => {
+    setReplyTo(null);
+  };
 
-    fetchPost();
-  }, [params.id, toast]);
+  const handleCommentSubmitted = () => {
+    fetchComments();
+    setReplyTo(null);
+  };
+
+  const { handleLike } = useLikePost({ refresh: fetchPost });
+
+  const router = useRouter();
+
+  const handleEdit = () => {
+    router.push(`/community/edit/${postId}`);
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('确定要删除这篇帖子吗？')) return;
+    try {
+      await communityApi.deletePost(postId);
+      toast({
+        title: '删除成功',
+        description: '帖子已被删除',
+      });
+      router.push('/community');
+    } catch {
+      toast({
+        title: '删除失败',
+        description: '请稍后再试',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (loading) {
     return (
-      <div className='space-y-4 p-6'>
-        <Skeleton className='h-8 w-3/4' />
-        <div className='flex items-center space-x-4 my-4'>
-          <Skeleton className='h-10 w-10 rounded-full' />
-          <Skeleton className='h-4 w-32' />
+      <div className='container mx-auto px-4 py-8'>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-6'>
+          <Skeleton className='h-8 w-3/4' />
+          <div className='flex items-center space-x-4'>
+            <Skeleton className='h-10 w-10 rounded-full' />
+            <Skeleton className='h-4 w-32' />
+          </div>
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-2/3' />
         </div>
-        <Skeleton className='h-4 w-full' />
-        <Skeleton className='h-4 w-full' />
-        <Skeleton className='h-4 w-2/3' />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className='text-center p-6'>
-        <p className='text-lg text-gray-600'>文章不存在或已被删除</p>
+      <div className='container mx-auto px-4 py-8'>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 text-center'>
+          <p className='text-lg text-gray-600 dark:text-gray-400'>
+            文章不存在或已被删除
+          </p>
+        </div>
       </div>
     );
   }
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchComments(newPage);
+  };
+
   return (
-    <div className='max-w-4xl p-6'>
-      <h1 className='text-3xl font-bold mb-4'>{post.title}</h1>
+    <div className='container mx-auto relative'>
+      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
+        <PostDetail post={post} handleLike={handleLike} />
 
-      <div className='flex items-center justify-between mb-6'>
-        <div className='flex items-center space-x-4'>
-          <div className='flex items-center'>
-            <span className='text-gray-600'>{post.author.nickname}</span>
-            <span className='mx-2'>·</span>
-            <span className='text-gray-500'>
-              {formatDistanceToNow(new Date(post.created_at), {
-                locale: zhCN,
-                addSuffix: true,
-              })}
-            </span>
+        {user?.id === post.author.id && (
+          <div className='fixed top-1/2 right-4 md:right-[calc((100%-896px)/2-48px)]'>
+            <PostActions
+              postId={postId}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </div>
+        )}
+
+        <div className='mt-8 border-t dark:border-gray-700 pt-6'>
+          <div className='flex justify-between items-center mb-6'>
+            <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+              评论 ({total || 0}) {/* 修改这里显示总评论数 */}
+            </h2>
+            <Button
+              variant='outline'
+              onClick={() => setShowCommentForm(true)}
+              className='hover:bg-gray-100 dark:hover:bg-gray-700'
+            >
+              <MessageSquare className='h-4 w-4 mr-2' />
+              发表评论
+            </Button>
+          </div>
+
+          <div className='space-y-6'>
+            <CommentsList
+              comments={comments}
+              loading={loadingComments}
+              onReply={handleReply}
+              onCommentDeleted={() => fetchComments(page)}
+              currentUserId={user?.id}
+              total={total || 0}
+              page={page}
+              onPageChange={handlePageChange}
+            />
+          </div>
+
+          <CommentForm
+            postId={postId}
+            replyTo={replyTo}
+            onCancelReply={handleCancelReply}
+            onCommentSubmitted={handleCommentSubmitted}
+            user={user}
+            showComments={showCommentForm}
+            setShowComments={setShowCommentForm}
+          />
         </div>
-
-        <div className='flex items-center space-x-4 text-gray-500'>
-          <div className='flex items-center'>
-            <Eye className='h-4 w-4 mr-1' />
-            <span>{post.view_count}</span>
-          </div>
-          <div className='flex items-center'>
-            <Heart className='h-4 w-4 mr-1' />
-            <span>{post.likes?.length}</span>
-          </div>
-          <div className='flex items-center'>
-            <MessageSquare className='h-4 w-4 mr-1' />
-            <span>{post.comments?.length}</span>
-          </div>
-        </div>
-      </div>
-
-      {post.tags && post.tags.length > 0 && (
-        <div className='flex flex-wrap gap-2 mb-6'>
-          {post.tags.map((tag: string) => (
-            <Badge key={tag} variant='secondary'>
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      <div className='prose dark:prose-invert max-w-none'>
-        <div dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
     </div>
   );
 }
+
+export default PostDetailContent;

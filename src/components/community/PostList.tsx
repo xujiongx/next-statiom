@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-// import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { MessageSquare, Heart, Eye } from 'lucide-react';
@@ -10,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '../ui/badge';
-import { communityApi, Post } from '@/api/community';
-
-
+import { communityApi } from '@/api/community';
+import { Post } from '@/types/community';
+import { useLikePost } from '@/hooks/useLikePost';
 
 interface PostListProps {
-  sortBy?: 'latest' | 'popular' | undefined;
+  sortBy?: 'latest' | 'popular' | 'following';
   filter?: string;
   tag?: string;
 }
@@ -27,35 +26,63 @@ export default function PostList({
 }: PostListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+  });
+
+  console.log('👩‍💻', pagination);
 
   const { toast } = useToast();
+  const fetchPosts = async (pageNum = 1) => {
+    setLoading(true);
+    try {
+      const params = {
+        sortBy,
+        page: pageNum,
+        limit: 4,
+        ...(tag && { tag }),
+        ...(filter && { filter }),
+      };
+
+      const data = await communityApi.getPosts(params);
+      if (pageNum === 1) {
+        setPosts(data.data.posts);
+      } else {
+        setPosts(prev => [...prev, ...data.data.posts]);
+      }
+      setPagination({
+        total: data.data.pagination.total,
+        totalPages: data.data.pagination.totalPages,
+      });
+      setHasMore(pageNum < data.data.pagination.totalPages);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      toast({
+        title: '获取帖子失败',
+        description: '请稍后再试',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        const params = {
-          sortBy,
-          ...(tag && { tag }),
-          ...(filter && { filter }),
-        };
+    setPage(1);
+    fetchPosts(1);
+  }, [sortBy, filter, tag]);
 
-        const data = await communityApi.getPosts(params);
-        setPosts(data.data.posts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-        toast({
-          title: '获取帖子失败',
-          description: '请稍后再试',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadMore = () => {
+    if (!hasMore || loading) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchPosts(nextPage);
+  };
 
-    fetchPosts();
-  }, [sortBy, filter, tag, toast]);
+  const { handleLike } = useLikePost({ refresh: fetchPosts });
 
   if (loading) {
     return (
@@ -99,28 +126,6 @@ export default function PostList({
     );
   }
 
-  const handleLike = async (postId: string) => {
-
-    try {
-      await communityApi.toggleLike(postId);
-      // 重新获取帖子列表以更新点赞状态
-      const data = await communityApi.getPosts({ sort: sortBy , tag, filter });
-      setPosts(data.data.posts);
-
-      toast({
-        title: '操作成功',
-        variant: 'default',
-      });
-    } catch (error) {
-      console.error('点赞失败:', error);
-      toast({
-        title: '点赞失败',
-        description: '请稍后重试',
-        variant: 'destructive',
-      });
-    }
-  };
-
   return (
     <div className='space-y-6'>
       {posts.map((post) => (
@@ -149,7 +154,11 @@ export default function PostList({
                   variant='secondary'
                   className='hover:bg-gray-200 dark:hover:bg-gray-700'
                 >
-                  <Link href={`/community/tag/${encodeURIComponent(tag)}`}>
+                  <Link
+                    href={`/subpackages/community/tag/${encodeURIComponent(
+                      tag
+                    )}`}
+                  >
                     {tag}
                   </Link>
                 </Badge>
@@ -179,19 +188,60 @@ export default function PostList({
                 className='flex items-center cursor-pointer'
                 onClick={() => handleLike(post.id)}
               >
-                <Heart 
-                  className={`h-4 w-4 mr-1 ${post.is_liked ? 'fill-current text-blue-500' : ''}`} 
+                <Heart
+                  className={`h-4 w-4 mr-1 ${
+                    post.is_liked ? 'fill-current text-blue-500' : ''
+                  }`}
                 />
                 <span>{post.like_count}</span>
               </div>
               <div className='flex items-center'>
                 <MessageSquare className='h-4 w-4 mr-1' />
-                <span>{post.comments?.length}</span>
+                <span>{post.comment_count}</span>
               </div>
             </div>
           </div>
+          {post.new_comment && (
+            <div className='mt-4 pt-3 border-t border-gray-200 dark:border-gray-700'>
+              <div className='flex items-start'>
+                <MessageSquare className='h-4 w-4 mr-2 text-gray-400 mt-1' />
+                <div>
+                  <div className='text-sm text-gray-500 dark:text-gray-400'>
+                    <span className='font-medium text-gray-700 dark:text-gray-300'>
+                      {post.new_comment.author.nickname}
+                    </span>
+                    <span className='mx-1'>·</span>
+                    <span className='text-xs'>
+                      {formatDistanceToNow(
+                        new Date(post.new_comment.created_at),
+                        {
+                          locale: zhCN,
+                          addSuffix: true,
+                        }
+                      )}
+                    </span>
+                  </div>
+                  <p className='text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1'>
+                    {post.new_comment.content}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ))}
+
+      {hasMore && (
+        <div className='text-center pt-4'>
+          <Button variant='outline' onClick={loadMore} disabled={loading}>
+            {loading ? '加载中...' : '加载更多'}
+          </Button>
+        </div>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <div className='text-center pt-4 text-gray-500'>没有更多帖子了</div>
+      )}
     </div>
   );
 }

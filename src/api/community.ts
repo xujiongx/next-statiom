@@ -1,25 +1,6 @@
 import { http } from '@/lib/http';
 import { ApiResponse } from '@/types/api';
-
-export interface Author {
-  id: string;
-  nickname: string;
-  image: string;
-}
-
-export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  view_count: number;
-  like_count: number;
-  is_liked: boolean;
-  tags: string[];
-  author: Author;
-  comments: unknown[];
-  likes: unknown[];
-}
+import { MyComment, Post } from '@/types/community';
 
 export interface CreatePostParams {
   title: string;
@@ -45,6 +26,12 @@ export interface PostsResponse {
   };
 }
 
+export interface Stats {
+  total_users: 0;
+  total_posts: 0;
+  active_users_this_week: 0;
+}
+
 export const communityApi = {
   // 获取帖子列表
   getPosts: (params: PostsFilter = {}): Promise<ApiResponse<PostsResponse>> => {
@@ -67,10 +54,12 @@ export const communityApi = {
   },
 
   // 获取热门标签
-  getPopularTags: (): Promise<
-    ApiResponse<{ name: string; count: number }[]>
+  getPopularTags: (
+    limit?: number
+  ): Promise<
+    ApiResponse<{ name: string; count: number; post_count: number }[]>
   > => {
-    return http.get('/community/tags/popular');
+    return http.get('/community/tags', { params: { limit } });
   },
 
   // 添加评论
@@ -83,5 +72,39 @@ export const communityApi = {
       content,
       parentId,
     });
+  },
+
+  // 获取帖子评论
+  getPostComments: (
+    postId: string, 
+    page: number = 1, 
+    limit: number = 10
+  ): Promise<ApiResponse<{
+    comments: MyComment[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    }
+  }>> => {
+    return http.get(`/community/posts/${postId}/comments`, {
+      params: { page, limit }
+    });
+  },
+
+  // 删除帖子
+  deletePost: (id: string): Promise<ApiResponse<void>> => {
+    return http.delete(`/community/posts/${id}`);
+  },
+
+  // 获取社区统计数据
+  getCommunityStats: (): Promise<ApiResponse<Stats>> => {
+    return http.get('/community/stats');
+  },
+
+  // 删除评论
+  deleteComment: (commentId: string): Promise<ApiResponse<void>> => {
+    return http.delete(`/community/comments/${commentId}`);
   },
 };

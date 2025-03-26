@@ -11,7 +11,7 @@ export const GET = (request: NextRequest) => {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const tag = searchParams.get('tag') || undefined;
-    const sortBy = searchParams.get('sort') || 'latest';
+    const sortBy = searchParams.get('sortBy') || 'latest';
 
     // 使用服务层获取帖子列表
     const result = await communityService.getPosts({
@@ -32,21 +32,7 @@ export const GET = (request: NextRequest) => {
 // 创建新帖子
 export const POST = (request: NextRequest) => {
   return withErrorHandler(async () => {
-    // const session = await getServerSession(authOptions);
-    // console.log('🧦', session);
-    console.log('👋', request);
     const userId = await getUserId(request);
-    console.log('👫', userId);
-    // 检查用户是否已登录
-    if (!userId) {
-      return NextResponse.json(
-        {
-          code: 401,
-          message: '请先登录',
-        },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
 

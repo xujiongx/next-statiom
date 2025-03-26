@@ -25,11 +25,13 @@ http.interceptors.response.use(
   (response) => response.data,
   (error) => {
     // 处理 401 未授权
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response.data.code === 401) {
       sessionStorage.removeItem('token');
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        window.location.href = `/login?redirect=${encodeURIComponent(
+          currentPath
+        )}`;
       }
     }
 

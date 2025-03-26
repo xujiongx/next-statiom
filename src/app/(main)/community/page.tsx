@@ -45,7 +45,7 @@ export default function CommunityPage() {
             </TabsContent>
             <TabsContent value='following'>
               <Suspense fallback={<Loading />}>
-                <PostList filter='following' />
+                <PostList sortBy='following' />
               </Suspense>
             </TabsContent>
           </Tabs>

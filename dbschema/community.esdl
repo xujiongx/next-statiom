@@ -29,6 +29,7 @@ module community {
     };
     property updated_at -> datetime;
     required link author -> default::User;  # 修改这里
+    required link post -> Post;  # 添加指向帖子的必要链接
     link parent_comment -> Comment;
     multi link likes -> default::User;  # 修改这里
   }
