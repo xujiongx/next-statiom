@@ -1,5 +1,5 @@
 'use client';
-import { AlignCenter, Sparkles } from 'lucide-react';
+import { AlignCenter, Languages, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 const tools = [
@@ -8,6 +8,12 @@ const tools = [
     description: '自动生成对联和横批',
     icon: AlignCenter,
     href: '/couplet',
+  },
+  {
+    title: '智能翻译',
+    description: '支持多语言互译',
+    icon: Languages,
+    href: '/subpackages/tools/translate',
   },
   {
     title: '敬请期待',
