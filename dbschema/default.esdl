@@ -8,6 +8,12 @@ module default {
     required property created_at -> datetime {
       default := datetime_current();
     };
+    
+    # 微信相关字段
+    property wechat_open_id -> str {
+      constraint exclusive;
+    }
+    property avatar -> str;
   }
 
   type Conversation {

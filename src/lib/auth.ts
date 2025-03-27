@@ -3,11 +3,12 @@ import { NextRequest } from 'next/server';
 import { ApiError } from './error';
 import { cookies, headers } from 'next/headers';
 import { authService } from '@/server/services/auth.service';
+import { JWT_SECRET } from '@/config'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export interface JwtPayload {
   userId: string;
+  username: string;
   exp: number;
 }
 
@@ -21,7 +22,11 @@ export interface Session {
 }
 
 export const getUserId = async (request: Request) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  let token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    const cookieStore = await cookies();
+    token = cookieStore.get('token')?.value;
+  }
 
   if (!token) {
     throw new ApiError('未登录', 401);
@@ -29,6 +34,8 @@ export const getUserId = async (request: Request) => {
 
   try {
     const decoded = verify(token, JWT_SECRET) as JwtPayload;
+
+
     if (!decoded.userId) {
       throw new ApiError('无效的 token', 401);
     }

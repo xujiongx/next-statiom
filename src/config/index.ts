@@ -16,3 +16,5 @@ export const config = {
     translation: 3600, // 翻译结果缓存时间（秒）
   },
 };
+
+export const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
