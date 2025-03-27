@@ -93,3 +93,4 @@ https://dash.cloudflare.com/sign-up 代理
 
    微信开放平台
    - https://open.weixin.qq.com/cgi-bin/applist?t=manage/list&page=0&num=20&openapptype=512&token=4665e1236c323ac781bb706bea69d7fcdd186c45&lang=zh_CN
+   - 要花300块钱，还要企业账号，域名还要备案才能使用，坑爹

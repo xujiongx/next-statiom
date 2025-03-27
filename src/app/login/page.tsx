@@ -17,7 +17,6 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { WechatIcon } from '@/components/icons/WechatIcon';
 
 const formSchema = z.object({
   username: z.string().min(1, '请输入用户名').trim(),
@@ -84,14 +83,14 @@ export default function LoginPage() {
     }
   };
 
-  const handleWechatLogin = () => {
-    // 获取微信登录二维码URL
-    const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/wechat/callback`);
-    const appId = process.env.NEXT_PUBLIC_WECHAT_APP_ID;
-    const wechatUrl = `https://open.weixin.qq.com/connect/qrconnect?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${Math.random().toString(36).slice(2)}#wechat_redirect`;
+  // const handleWechatLogin = () => {
+  //   // 获取微信登录二维码URL
+  //   const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/wechat/callback`);
+  //   const appId = process.env.NEXT_PUBLIC_WECHAT_APP_ID;
+  //   const wechatUrl = `https://open.weixin.qq.com/connect/qrconnect?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${Math.random().toString(36).slice(2)}#wechat_redirect`;
     
-    window.open(wechatUrl, 'wechat_login', 'width=800,height=600');
-  };
+  //   window.open(wechatUrl, 'wechat_login', 'width=800,height=600');
+  // };
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -196,30 +195,6 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
-          <div className='mt-6 text-center'>
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-gray-300' />
-              </div>
-              <div className='relative flex justify-center text-sm'>
-                <span className='px-2 bg-background text-muted-foreground'>
-                  或使用以下方式登录
-                </span>
-              </div>
-            </div>
-
-            <div className='mt-6'>
-              <Button
-                type='button'
-                variant='outline'
-                className='w-full'
-                onClick={handleWechatLogin}
-              >
-                <WechatIcon className='w-5 h-5 mr-2' />
-                微信登录
-              </Button>
-            </div>
-          </div>
         </Form>
       </div>
     </div>
