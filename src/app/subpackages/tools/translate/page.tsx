@@ -139,32 +139,36 @@ export default function TranslatePage() {
         </Button>
 
         <div className='relative'>
-          <Textarea
-            placeholder='翻译结果'
-            value={targetText}
-            readOnly
-            rows={6}
-          />
-          {targetText && (
-            <div className='absolute right-2 top-2 flex gap-2'>
-              <Button
-                variant='ghost'
-                size='icon'
-                onClick={() => handleCopy(targetText)}
-                title='复制'
-              >
-                <Copy className='h-4 w-4' />
-              </Button>
-              <Button
-                variant='ghost'
-                size='icon'
-                onClick={() => handleSpeak(targetText, targetLang)}
-                title='朗读'
-              >
-                <Volume2 className='h-4 w-4' />
-              </Button>
-            </div>
-          )}
+          <div>
+            <Textarea
+              placeholder='翻译结果'
+              value={targetText}
+              readOnly
+              rows={6}
+            />
+            {targetText && (
+              <div className='flex gap-2 mt-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => handleCopy(targetText)}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className='h-4 w-4' />
+                  复制
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => handleSpeak(targetText, targetLang)}
+                  className="flex items-center gap-2"
+                >
+                  <Volume2 className='h-4 w-4' />
+                  朗读
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </main>

@@ -17,7 +17,7 @@ export const POST = (request: Request) => {
       );
     }
 
-    const prompt = `请将以下文本从${from}翻译成${to}：\n\n${text}`;
+    const prompt = `请将以下文本从${from}翻译成${to}：\n\n${text}，只返回翻译后的结果，不要返回其他信息。`;
     const response = await mistralClient.chat.complete({
       model: config.mistral.model,
       messages: [{ role: 'user', content: prompt }],
