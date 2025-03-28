@@ -3,6 +3,10 @@ import { withErrorHandler } from '@/lib/api';
 import fetch, { RequestInit, Response } from 'node-fetch';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { Agent } from 'http';
+import { Mistral, SDKOptions } from '@mistralai/mistralai';
+import { config } from '@/config';
+
+const mistralClient = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
 
 // 定义请求选项的接口
 interface FetchOptions extends Omit<RequestInit, 'agent'> {
@@ -44,10 +48,26 @@ const fetchWithRetry = async (
   throw new Error('所有重试都失败了');
 };
 
+// 添加响应数据的接口定义
+interface ApiResponse {
+  code: number;
+  data?: {
+    url: string;
+    prompt: string;
+    translatedPrompt: string;
+  };
+  message?: string;
+}
+
+// 添加请求体的接口定义
+interface RequestBody {
+  prompt: string;
+}
+
 export const POST = (request: Request) => {
   return withErrorHandler(async () => {
     try {
-      const body = await request.json();
+      const body = await request.json() as RequestBody;
       const { prompt } = body;
 
       if (!prompt) {
@@ -57,31 +77,15 @@ export const POST = (request: Request) => {
         );
       }
 
-      // 先调用翻译接口
-      const translateResponse = await fetchWithRetry(
-        'https://api-inference.huggingface.co/models/facebook/mbart-large-50-many-to-many-mmt',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.HUGGINGFACE_API_TOKEN || 'hf_dummy_token'}`,
-          },
-          body: JSON.stringify({
-            inputs: prompt,
-            parameters: {
-              src_lang: 'zh',
-              tgt_lang: 'en',
-            },
-          }),
-        }
-      );
+      // 使用 Mistral 进行翻译
+      const translatePrompt = `请将以下中文文本翻译成英文，翻译时要考虑图像生成的上下文，只返回翻译结果：\n\n${prompt}`;
+      const translateResponse = await mistralClient.chat.complete({
+        model: config.mistral.model,
+        messages: [{ role: 'user', content: translatePrompt }],
+        stream: false,
+      });
 
-      if (!translateResponse.ok) {
-        throw new Error('翻译失败');
-      }
-
-      const translatedText = await translateResponse.text();
-      const englishPrompt = JSON.parse(translatedText)[0]?.translation_text || prompt;
+      const englishPrompt = translateResponse.choices?.[0].message.content || prompt;
 
       // 使用翻译后的英文提示词生成图片
       const response = await fetchWithRetry(
@@ -109,21 +113,19 @@ export const POST = (request: Request) => {
         code: 0,
         data: {
           url: dataUrl,
-          prompt, // 原始提示词
-          translatedPrompt: englishPrompt, // 翻译后的提示词
+          prompt,
+          translatedPrompt: englishPrompt,
         },
-      });
+      } as ApiResponse);
+      
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '图片生成失败，请稍后重试';
       console.error('Image generation error:', error);
       
-      return NextResponse.json(
-        {
-          code: 500,
-          message: errorMessage,
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        code: 500,
+        message: errorMessage,
+      } as ApiResponse);
     }
   });
 };
