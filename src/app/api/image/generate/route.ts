@@ -57,6 +57,33 @@ export const POST = (request: Request) => {
         );
       }
 
+      // 先调用翻译接口
+      const translateResponse = await fetchWithRetry(
+        'https://api-inference.huggingface.co/models/facebook/mbart-large-50-many-to-many-mmt',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.HUGGINGFACE_API_TOKEN || 'hf_dummy_token'}`,
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: {
+              src_lang: 'zh',
+              tgt_lang: 'en',
+            },
+          }),
+        }
+      );
+
+      if (!translateResponse.ok) {
+        throw new Error('翻译失败');
+      }
+
+      const translatedText = await translateResponse.text();
+      const englishPrompt = JSON.parse(translatedText)[0]?.translation_text || prompt;
+
+      // 使用翻译后的英文提示词生成图片
       const response = await fetchWithRetry(
         "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
         {
@@ -65,7 +92,7 @@ export const POST = (request: Request) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${process.env.HUGGINGFACE_API_TOKEN || "hf_dummy_token"}`,
           },
-          body: JSON.stringify({ inputs: prompt }),
+          body: JSON.stringify({ inputs: englishPrompt }),
         }
       );
 
@@ -82,6 +109,8 @@ export const POST = (request: Request) => {
         code: 0,
         data: {
           url: dataUrl,
+          prompt, // 原始提示词
+          translatedPrompt: englishPrompt, // 翻译后的提示词
         },
       });
     } catch (error: unknown) {

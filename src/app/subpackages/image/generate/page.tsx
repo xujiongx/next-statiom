@@ -40,8 +40,6 @@ export default function ImagePage() {
     }
   };
 
-  console.log('👨‍👦‍👦', imageUrl);
-
   return (
     <main className='container max-w-4xl p-6'>
       <div className='mb-6'>
