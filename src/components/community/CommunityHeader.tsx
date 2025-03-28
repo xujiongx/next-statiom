@@ -81,7 +81,7 @@ export default function CommunityHeader() {
               {loading ? (
                 <Skeleton className="h-6 sm:h-7 w-12 sm:w-14 bg-blue-400/30" />
               ) : (
-                <p className="text-lg sm:text-xl font-bold">{stats.active_users_this_week.toLocaleString()}</p>
+                <p className="text-lg sm:text-xl font-bold">{stats.active_users_this_week?.toLocaleString()}</p>
               )}
               <p className="text-xs text-blue-200">本周活跃</p>
             </div>

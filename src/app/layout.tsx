@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import StoreProvider from '@/components/providers/StoreProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider'; // 添加主题提供者
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,8 +39,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-[100dvh] overflow-x-hidden`}
       >
         <StoreProvider>
-          <main className='flex min-h-[100dvh] flex-col'>{children}</main>
-          <Toaster />
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem> {/* 添加主题提供者 */}
+            <main className='flex min-h-[100dvh] flex-col'>{children}</main>
+            <Toaster />
+          </ThemeProvider>
         </StoreProvider>
       </body>
     </html>
