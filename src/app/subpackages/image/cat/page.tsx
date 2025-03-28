@@ -16,18 +16,21 @@ export default function CatPage() {
   const [loading, setLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [catImage, setCatImage] = useState<CatImage | null>(null);
+  const [prevImage, setPrevImage] = useState<CatImage | null>(null);
 
   const fetchCatImage = async () => {
     try {
       setLoading(true);
       setImageLoaded(false);
+      // 保存当前图片作为过渡
+      if (catImage) {
+        setPrevImage(catImage);
+      }
       const response = await fetch('https://api.thecatapi.com/v1/images/search');
       const data = await response.json();
       setCatImage(data[0]);
     } catch (error) {
       console.error('获取猫咪图片失败:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -52,22 +55,34 @@ export default function CatPage() {
       <div className='w-full max-w-3xl mx-auto'>
         <div className='relative w-full rounded-lg overflow-hidden' 
              style={{ paddingBottom: catImage ? `${(catImage.height / catImage.width) * 100}%` : '75%' }}>
-          {catImage ? (
+          {prevImage && !imageLoaded && (
+            <Image
+              src={prevImage.url}
+              alt='上一只可爱的猫咪'
+              fill
+              className='object-contain opacity-50'
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )}
+          {catImage && (
             <Image
               src={catImage.url}
               alt='可爱的猫咪'
               fill
-              className={`object-contain transition-opacity duration-300 ${
+              className={`object-contain transition-opacity duration-500 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority
-              loading="eager"
-              onLoad={() => setImageLoaded(true)}
+              loading="lazy"
+              onLoad={() => {
+                setImageLoaded(true);
+                setLoading(false);
+              }}
             />
-          ) : (
+          )}
+          {loading && (
             <div className='absolute inset-0 flex items-center justify-center'>
-              <Loader2 className='h-8 w-8 animate-spin text-gray-400' />
+              <Loader2 className='h-8 w-8 animate-spin text-primary' />
             </div>
           )}
         </div>

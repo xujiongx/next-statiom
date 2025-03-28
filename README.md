@@ -101,3 +101,8 @@ AI
    dall-e-3文生图
    - 没额度，要花钱
    - 使用https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0代替
+
+
+   功能列表
+   - AI聊天
+   - 图片生成

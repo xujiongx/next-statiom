@@ -4,6 +4,7 @@ import {
   Image,
   Gamepad2,
   MoreHorizontal,
+  Type, // 添加文字图标
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,6 +20,12 @@ const tools = [
     description: '智能图片编辑与优化',
     icon: Image,
     href: '/subpackages/image',
+  },
+  {
+    title: '文字处理',
+    description: '智能文本编辑与优化',
+    icon: Type,
+    href: '/subpackages/text',
   },
   {
     title: '趣味游戏',
