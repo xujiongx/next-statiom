@@ -97,3 +97,7 @@ AI
    微信开放平台
    - https://open.weixin.qq.com/cgi-bin/applist?t=manage/list&page=0&num=20&openapptype=512&token=4665e1236c323ac781bb706bea69d7fcdd186c45&lang=zh_CN
    - 要花300块钱，还要企业账号，域名还要备案才能使用，坑爹
+
+   dall-e-3文生图
+   - 没额度，要花钱
+   - 使用https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0代替
