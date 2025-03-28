@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Cat, Wand2 } from 'lucide-react';
+import { Cat, Wand2, User } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 export default function ImagePage() {
@@ -12,6 +12,13 @@ export default function ImagePage() {
       icon: <Wand2 className='h-6 w-6' />,
       description: '输入描述，生成独特的 AI 图片',
       path: '/subpackages/image/generate',
+    },
+    {
+      id: 'avatar',
+      title: 'AI 头像生成',
+      icon: <User className='h-6 w-6' />,
+      description: '生成个性化的AI头像',
+      path: '/subpackages/image/avatar',
     },
     {
       id: 'cat',
