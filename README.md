@@ -102,6 +102,9 @@ AI
    - 没额度，要花钱
    - 使用https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0代替
 
+文生音乐
+- facebook/musicgen-small
+- 一直API 请求失败: Internal Server Error
 
    功能列表
    - AI聊天
