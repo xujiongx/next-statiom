@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Maximize, Minimize } from 'lucide-react';
+import { ArrowLeft, Maximize, Minimize, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -30,28 +30,67 @@ export default function BubbleBurstGame() {
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    // 兼容 iOS Safari
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
     return () => {
       if (iframe) {
         iframe.removeEventListener('load', handleIframeLoad);
       }
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener(
+        'webkitfullscreenchange',
+        handleFullscreenChange
+      );
     };
   }, []);
 
   // 切换全屏模式
   const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-
-    if (!document.fullscreenElement) {
+    // 直接使用CSS模拟全屏，不使用Fullscreen API
+    if (!isFullscreen) {
       // 进入全屏模式
-      containerRef.current.requestFullscreen().catch(err => {
-        console.error(`全屏模式错误: ${err.message}`);
-      });
+      if (iframeRef.current) {
+        const iframe = iframeRef.current;
+        iframe.style.position = 'fixed';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.zIndex = '9999';
+        iframe.style.border = 'none';
+        iframe.style.backgroundColor = '#000';
+        
+        // 隐藏页面其他内容
+        document.body.style.overflow = 'hidden';
+        
+        // 手动设置全屏状态
+        setIsFullscreen(true);
+      }
     } else {
       // 退出全屏模式
-      document.exitFullscreen();
+      if (iframeRef.current) {
+        const iframe = iframeRef.current;
+        iframe.style.position = '';
+        iframe.style.top = '';
+        iframe.style.left = '';
+        iframe.style.width = '100%';
+        iframe.style.height = '80vh';
+        iframe.style.zIndex = '';
+        iframe.style.border = '0';
+        
+        // 恢复页面滚动
+        document.body.style.overflow = '';
+        
+        // 手动设置全屏状态
+        setIsFullscreen(false);
+      }
     }
+  };
+
+  // 在新标签页打开游戏
+  const openInNewTab = () => {
+    window.open('/games/bubble-burst/index.html', '_blank');
   };
 
   return (
@@ -67,28 +106,39 @@ export default function BubbleBurstGame() {
 
         <div className='flex justify-between items-center mb-4'>
           <h1 className='text-2xl font-bold'>Bubble Burst</h1>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleFullscreen}
-            className='flex items-center gap-1'
-          >
-            {isFullscreen ? (
-              <>
-                <Minimize className='w-4 h-4' />
-                退出全屏
-              </>
-            ) : (
-              <>
-                <Maximize className='w-4 h-4' />
-                全屏模式
-              </>
-            )}
-          </Button>
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={openInNewTab}
+              className='flex items-center gap-1'
+            >
+              <ExternalLink className='w-4 h-4' />
+              新标签页打开
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={toggleFullscreen}
+              className='flex items-center gap-1'
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize className='w-4 h-4' />
+                  退出全屏
+                </>
+              ) : (
+                <>
+                  <Maximize className='w-4 h-4' />
+                  全屏模式
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        <div 
-          ref={containerRef} 
+        <div
+          ref={containerRef}
           className='w-full border rounded-lg overflow-hidden relative'
         >
           <iframe
@@ -98,6 +148,7 @@ export default function BubbleBurstGame() {
             style={{ height: '80vh' }}
             title='Bubble Burst 游戏'
             sandbox='allow-scripts allow-same-origin'
+            allow='fullscreen'
           />
         </div>
       </div>

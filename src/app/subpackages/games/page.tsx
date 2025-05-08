@@ -14,6 +14,11 @@ const games = [
     href: '/subpackages/games/sokoban',
   },
   {
+    title: '数字华容道',
+    description: '数字华容道游戏，通过数字移动来完成拼图',
+    href: '/subpackages/games/number-puzzle',
+  },
+  {
     title: 'CoupAhoo',
     description:
       '你终于厌倦了你的舰队和他们的无能。一一击败他们所有 13 人，并在顶部占据一席之地。',
