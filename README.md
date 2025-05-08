@@ -109,3 +109,7 @@ AI
    功能列表
    - AI聊天
    - 图片生成
+
+
+趣味游戏
+- https://js13kgames.com/games/bubble-burst
