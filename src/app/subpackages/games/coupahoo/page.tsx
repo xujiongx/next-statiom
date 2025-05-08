@@ -50,16 +50,24 @@ export default function CoupAhooGame() {
     // 直接使用CSS模拟全屏，不使用Fullscreen API
     if (!isFullscreen) {
       // 进入全屏模式
-      if (iframeRef.current) {
+      if (iframeRef.current && containerRef.current) {
+        // 设置容器为全屏
+        containerRef.current.style.position = 'fixed';
+        containerRef.current.style.top = '0';
+        containerRef.current.style.left = '0';
+        containerRef.current.style.width = '100%';
+        containerRef.current.style.height = '100%';
+        containerRef.current.style.zIndex = '9999';
+        containerRef.current.style.backgroundColor = '#000';
+        containerRef.current.style.display = 'flex';
+        containerRef.current.style.flexDirection = 'column';
+        
+        // 设置iframe填满容器
         const iframe = iframeRef.current;
-        iframe.style.position = 'fixed';
-        iframe.style.top = '0';
-        iframe.style.left = '0';
         iframe.style.width = '100%';
         iframe.style.height = '100%';
-        iframe.style.zIndex = '9999';
         iframe.style.border = 'none';
-        iframe.style.backgroundColor = '#000';
+        iframe.style.flex = '1';
         
         // 隐藏页面其他内容
         document.body.style.overflow = 'hidden';
@@ -69,15 +77,24 @@ export default function CoupAhooGame() {
       }
     } else {
       // 退出全屏模式
-      if (iframeRef.current) {
+      if (iframeRef.current && containerRef.current) {
+        // 恢复容器样式
+        containerRef.current.style.position = '';
+        containerRef.current.style.top = '';
+        containerRef.current.style.left = '';
+        containerRef.current.style.width = '';
+        containerRef.current.style.height = '';
+        containerRef.current.style.zIndex = '';
+        containerRef.current.style.backgroundColor = '';
+        containerRef.current.style.display = '';
+        containerRef.current.style.flexDirection = '';
+        
+        // 恢复iframe样式
         const iframe = iframeRef.current;
-        iframe.style.position = '';
-        iframe.style.top = '';
-        iframe.style.left = '';
         iframe.style.width = '100%';
         iframe.style.height = '80vh';
-        iframe.style.zIndex = '';
         iframe.style.border = '0';
+        iframe.style.flex = '';
         
         // 恢复页面滚动
         document.body.style.overflow = '';
@@ -121,6 +138,14 @@ export default function CoupAhooGame() {
               size="sm" 
               onClick={toggleFullscreen}
               className='flex items-center gap-1'
+              style={{
+                position: isFullscreen ? 'fixed' : 'static',
+                top: isFullscreen ? '10px' : 'auto',
+                right: isFullscreen ? '10px' : 'auto',
+                zIndex: isFullscreen ? '10000' : 'auto',
+                backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : '',
+                color: isFullscreen ? 'white' : ''
+              }}
             >
               {isFullscreen ? (
                 <>

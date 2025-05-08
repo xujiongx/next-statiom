@@ -5,7 +5,7 @@ import { ArrowLeft, Maximize, Minimize, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export default function BubbleBurstGame() {
+export default function TheWayOfTheDodoGame() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -107,7 +107,7 @@ export default function BubbleBurstGame() {
 
   // 在新标签页打开游戏
   const openInNewTab = () => {
-    window.open('/games/bubble-burst/index.html', '_blank');
+    window.open('/games/the-way-of-the-dodo/index.html', '_blank');
   };
 
   return (
@@ -122,7 +122,7 @@ export default function BubbleBurstGame() {
         </Link>
 
         <div className='flex justify-between items-center mb-4'>
-          <h1 className='text-2xl font-bold'>Bubble Burst</h1>
+          <h1 className='text-2xl font-bold'>The Way of the Dodo</h1>
           <div className='flex gap-2'>
             <Button
               variant='outline'
@@ -168,10 +168,10 @@ export default function BubbleBurstGame() {
         >
           <iframe
             ref={iframeRef}
-            src='/games/bubble-burst/index.html'
+            src='/games/the-way-of-the-dodo/index.html'
             className='w-full border-0'
             style={{ height: '80vh' }}
-            title='Bubble Burst 游戏'
+            title='The Way of the Dodo 游戏'
             sandbox='allow-scripts allow-same-origin'
             allow='fullscreen'
           />

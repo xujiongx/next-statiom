@@ -30,6 +30,12 @@ const games = [
       '在这个闪闪发光的冒险中，通过克服障碍和避开敌人 （XIII） 泡泡来达到目标',
     href: '/subpackages/games/bubble-burst',
   },
+  {
+    title: 'The Way of the Dodo',
+    description:
+      '体验渡渡鸟的冒险之旅，在这个充满挑战的游戏中探索未知世界',
+    href: '/subpackages/games/the-way-of-the-dodo',
+  },
 ];
 
 export default function GamesPage() {
