@@ -36,6 +36,12 @@ const games = [
       '体验渡渡鸟的冒险之旅，在这个充满挑战的游戏中探索未知世界',
     href: '/subpackages/games/the-way-of-the-dodo',
   },
+  {
+    title: 'Path to Glory',
+    description:
+      '踏上荣耀之路，在这个精彩的冒险游戏中战胜挑战，赢得最终的胜利',
+    href: '/subpackages/games/path-to-glory',
+  },
 ];
 
 export default function GamesPage() {
