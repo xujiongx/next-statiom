@@ -1,8 +1,14 @@
 'use client';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 const tools = [
+  {
+    title: 'OpenRouter 聊天',
+    description: '使用 OpenRouter API 进行对话，体验 GPT-4o 等多种模型',
+    icon: MessageSquare,
+    href: '/subpackages/tools/openrouter-chat',
+  },
   {
     title: '敬请期待',
     description: '更多AI工具正在开发',
