@@ -1,3 +1,5 @@
+import { UploadedImage } from '@/components/ui/image-upload';
+
 export interface Author {
   id: string;
   nickname: string;
@@ -18,6 +20,7 @@ export interface Post {
   comments: MyComment[];
   new_comment: MyComment;
   likes: unknown[];
+  images: UploadedImage[];
 }
 
 export interface MyComment {

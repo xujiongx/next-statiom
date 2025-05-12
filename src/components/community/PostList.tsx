@@ -12,6 +12,7 @@ import { Badge } from '../ui/badge';
 import { communityApi } from '@/api/community';
 import { Post } from '@/types/community';
 import { useLikePost } from '@/hooks/useLikePost';
+import Image from 'next/image';
 
 interface PostListProps {
   sortBy?: 'latest' | 'popular' | 'following';
@@ -51,7 +52,7 @@ export default function PostList({
       if (pageNum === 1) {
         setPosts(data.data.posts);
       } else {
-        setPosts(prev => [...prev, ...data.data.posts]);
+        setPosts((prev) => [...prev, ...data.data.posts]);
       }
       setPagination({
         total: data.data.pagination.total,
@@ -83,6 +84,42 @@ export default function PostList({
   };
 
   const { handleLike } = useLikePost({ refresh: fetchPosts });
+
+  // 在文章内容渲染部分添加图片渲染逻辑
+  const renderPostContent = (post: Post) => {
+    return (
+      <div>
+        {post.images && post.images.length > 0 && (
+          <div className='grid grid-cols-3 gap-2 mt-4 mb-4'>
+            {post.images.slice(0, 9).map((image, index) => (
+              <div
+                key={index}
+                className='relative aspect-square rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all'
+              >
+                <div className='relative w-full h-full'>
+                  <Image
+                    src={image.display_url || image.url}
+                    alt={`图片 ${index + 1}`}
+                    className='object-cover cursor-pointer transition-transform'
+                    fill
+                    sizes='(max-width: 768px) 33vw, (max-width: 1200px) 33vw, 33vw'
+                    unoptimized={image.url.startsWith('blob:')}
+                  />
+                  {post.images.length > 9 && index === 8 && (
+                    <div className='absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer'>
+                      <span className='text-white text-lg font-medium'>
+                        +{post.images.length - 9}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -141,10 +178,14 @@ export default function PostList({
               {post.title}
             </h3>
           </Link>
-
-          <p className='text-gray-600 dark:text-gray-400 mb-3 line-clamp-2'>
-            {post.content.replace(/<[^>]*>/g, '')}
-          </p>
+          <Link
+            href={`/subpackages/community/detail/${post.id}`}
+            className='block'
+          >
+            <p className='text-gray-600 dark:text-gray-400 mb-3 line-clamp-2'>
+              {post.content.replace(/<[^>]*>/g, '')}
+            </p>
+          </Link>
 
           <div className='flex flex-wrap gap-2 mb-4'>
             {post.tags &&
@@ -164,6 +205,13 @@ export default function PostList({
                 </Badge>
               ))}
           </div>
+
+          <Link
+            href={`/subpackages/community/detail/${post.id}`}
+            className='block'
+          >
+            {renderPostContent(post)}
+          </Link>
 
           <div className='flex justify-between items-center'>
             <div className='flex items-center'>

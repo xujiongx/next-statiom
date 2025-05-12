@@ -52,6 +52,7 @@ export const POST = (request: NextRequest) => {
       title: body.title,
       content: body.content,
       tags: body.tags || [],
+      images: body.images || [],
       userId: userId,
     });
 

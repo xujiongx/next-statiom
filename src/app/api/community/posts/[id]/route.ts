@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, context: RouteParams) {
     }
 
     const body = await request.json();
-    const { title, content, tags } = body;
+    const { title, content, tags ,images} = body;
 
     if (!title?.trim() || !content?.trim()) {
       return Response.json(
@@ -81,6 +81,7 @@ export async function PUT(request: NextRequest, context: RouteParams) {
       title: title.trim(),
       content: content.trim(),
       tags: tags || [],
+      images: images || [],
     });
 
     return Response.json({

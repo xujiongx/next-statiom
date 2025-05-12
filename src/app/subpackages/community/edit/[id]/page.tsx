@@ -87,6 +87,7 @@ export default function EditPostPage() {
           title: post.title,
           content: post.content,
           tags: post.tags,
+          images: post.images,
         }}
         onSubmit={handleSubmit}
       />

@@ -16,6 +16,7 @@ module community {
       default := 0;
     };
     property tags -> array<str>;
+    images: json;  # 存储图片信息的JSON数组
     property status -> PostStatus {
       default := PostStatus.Published;
     };

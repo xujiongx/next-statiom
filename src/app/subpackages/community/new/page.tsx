@@ -4,21 +4,27 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 import { communityApi } from '@/api/community';
 import { PostForm } from '../components/PostForm';
+import { UploadedImage } from '@/components/ui/image-upload'
 
 export default function NewPostPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = async (values: { title: string; content: string; tags: string[] }) => {
+  const handleSubmit = async (values: {
+    title: string;
+    content: string;
+    tags: string[];
+    images?: UploadedImage[];
+  }) => {
     try {
       const response = await communityApi.createPost(values);
       console.log('🦹‍♀️', response);
-      
+
       toast({
         title: '发布成功',
         description: '您的帖子已成功发布',
       });
-      
+
       router.push('/community');
     } catch (error) {
       console.error('Error creating post:', error);

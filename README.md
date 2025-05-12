@@ -113,3 +113,7 @@ AI
 
 趣味游戏
 - https://js13kgames.com/games/bubble-burst
+
+
+图片上传
+- https://u97962.imgbb.com/

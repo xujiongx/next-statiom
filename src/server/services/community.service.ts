@@ -1,3 +1,4 @@
+import { UploadedImage } from '@/components/ui/image-upload';
 import { getServerSession } from '@/lib/auth';
 import { client } from '@/lib/db';
 import { ApiError } from '@/lib/error';
@@ -12,6 +13,7 @@ interface CreatePostParams {
   title: string;
   content: string;
   tags?: string[];
+  images?: UploadedImage[];
   userId: string;
 }
 
@@ -44,12 +46,13 @@ interface UpdatePostParams {
   title: string;
   content: string;
   tags: string[];
+  images?: UploadedImage[]; // 新增 images 字段
 }
 
 export class CommunityService {
   // 创建新帖子
   async createPost(params: CreatePostParams) {
-    const { title, content, tags = [], userId } = params;
+    const { title, content, tags = [], images = [], userId } = params;
 
     if (!title.trim()) {
       throw new ApiError('标题不能为空', 400);
@@ -74,6 +77,7 @@ export class CommunityService {
               title := <str>$title,
               content := <str>$content,
               tags := <array<str>>$tags,
+              images := <json>$images,
               author := user
             }
           )
@@ -90,7 +94,7 @@ export class CommunityService {
           }
         }
         `,
-        { title, content, tags, userId }
+        { title, content, tags, images: JSON.stringify(images), userId }
       );
 
       if (!posts.length) {
@@ -167,6 +171,7 @@ export class CommunityService {
           title,
           content,
           tags,
+          images,
           created_at,
           view_count,
           author: {
@@ -190,6 +195,7 @@ export class CommunityService {
         title,
         content,
         tags,
+        images,
         created_at,
         view_count,
         author: {
@@ -220,7 +226,19 @@ export class CommunityService {
     `;
 
     try {
-      const posts = await client.query(query, params);
+      const posts = (await client.query(query, params)) as Post[];
+
+      // 解析每个帖子的 images 字段
+      for (const post of posts) {
+        if (post.images && typeof post.images === 'string') {
+          try {
+            post.images = JSON.parse(post.images);
+          } catch (e) {
+            console.error('解析帖子图片数据失败:', e);
+            post.images = [];
+          }
+        }
+      }
 
       // 修改计数查询和参数
       const countQuery = `
@@ -280,6 +298,7 @@ export class CommunityService {
           title,
           content,
           tags,
+          images,
           created_at,
           updated_at,
           view_count,
@@ -338,7 +357,18 @@ export class CommunityService {
         { postId }
       );
 
-      return posts[0];
+      // 解析 images 字段
+      const post = posts[0] as Post;
+      if (post.images && typeof post.images === 'string') {
+        try {
+          post.images = JSON.parse(post.images);
+        } catch (e) {
+          console.error('解析帖子图片数据失败:', e);
+          post.images = [];
+        }
+      }
+
+      return post;
     } catch (error) {
       console.error('获取帖子详情错误:', error);
       if (error instanceof ApiError) {
@@ -644,7 +674,7 @@ export class CommunityService {
     }
   }
   async updatePost(params: UpdatePostParams) {
-    const { postId, userId, title, content, tags } = params;
+    const { postId, userId, title, content, tags, images } = params;
 
     try {
       // 检查帖子是否存在且属于当前用户
@@ -677,10 +707,17 @@ export class CommunityService {
         title := <str>$title,
         content := <str>$content,
         tags := <array<str>>$tags,
+        ${images !== undefined ? 'images := <json>$images,' : ''}
         updated_at := datetime_current()
       }
       `,
-        { postId, title, content, tags }
+        {
+          postId,
+          title,
+          content,
+          tags,
+          ...(images !== undefined && { images: JSON.stringify(images) }),
+        }
       );
 
       if (!result.length) {

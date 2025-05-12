@@ -5,14 +5,21 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload, UploadedImage } from '@/components/ui/image-upload';
 
 interface PostFormProps {
   initialValues?: {
     title: string;
     content: string;
     tags: string[];
+    images: UploadedImage[];
   };
-  onSubmit: (values: { title: string; content: string; tags: string[] }) => Promise<void>;
+  onSubmit: (values: {
+    title: string;
+    content: string;
+    tags: string[];
+    images?: UploadedImage[];
+  }) => Promise<void>;
   submitText?: string;
 }
 
@@ -22,6 +29,7 @@ export function PostForm({ initialValues, onSubmit, submitText = '发布帖子' 
   const [tags, setTags] = useState<string[]>(initialValues?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<UploadedImage[]>(initialValues?.images||[]);
   
   const router = useRouter();
   
@@ -35,14 +43,11 @@ export function PostForm({ initialValues, onSubmit, submitText = '发布帖子' 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!title.trim() || !content.trim()) {
       return;
     }
-    
     setIsSubmitting(true);
     
     try {
@@ -50,6 +55,7 @@ export function PostForm({ initialValues, onSubmit, submitText = '发布帖子' 
         title: title.trim(),
         content: content.trim(),
         tags,
+        images: images.length > 0 ? images : undefined,
       });
     } finally {
       setIsSubmitting(false);
@@ -83,6 +89,20 @@ export function PostForm({ initialValues, onSubmit, submitText = '发布帖子' 
           placeholder="请输入帖子内容..."
           rows={8}
           required
+        />
+      </div>
+      
+      {/* 图片上传组件 */}
+      <div>
+        <label htmlFor="images" className="block text-sm font-medium mb-2">
+          上传图片 (最多5张)
+        </label>
+        <ImageUpload 
+          value={images}
+          onChange={setImages}
+          maxFiles={9}
+          maxSize={5}
+          disabled={isSubmitting}
         />
       </div>
       

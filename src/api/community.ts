@@ -1,3 +1,4 @@
+import { UploadedImage } from '@/components/ui/image-upload';
 import { http } from '@/lib/http';
 import { ApiResponse } from '@/types/api';
 import { MyComment, Post } from '@/types/community';
@@ -6,6 +7,7 @@ export interface CreatePostParams {
   title: string;
   content: string;
   tags?: string[];
+  images?: UploadedImage[];
 }
 
 export interface PostsFilter {
@@ -44,7 +46,10 @@ export const communityApi = {
   },
 
   // 更新帖子
-  updatePost: (id: string, params: CreatePostParams): Promise<ApiResponse<Post>> => {
+  updatePost: (
+    id: string,
+    params: CreatePostParams
+  ): Promise<ApiResponse<Post>> => {
     return http.put(`/community/posts/${id}`, params);
   },
 
@@ -81,20 +86,22 @@ export const communityApi = {
 
   // 获取帖子评论
   getPostComments: (
-    postId: string, 
-    page: number = 1, 
+    postId: string,
+    page: number = 1,
     limit: number = 10
-  ): Promise<ApiResponse<{
-    comments: MyComment[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    }
-  }>> => {
+  ): Promise<
+    ApiResponse<{
+      comments: MyComment[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>
+  > => {
     return http.get(`/community/posts/${postId}/comments`, {
-      params: { page, limit }
+      params: { page, limit },
     });
   },
 
