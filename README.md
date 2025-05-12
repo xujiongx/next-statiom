@@ -117,3 +117,6 @@ AI
 
 图片上传
 - https://u97962.imgbb.com/
+
+音乐生成
+- https://www.riffusion.com/library/my-songs
