@@ -95,7 +95,7 @@ export function PostForm({ initialValues, onSubmit, submitText = '发布帖子' 
       {/* 图片上传组件 */}
       <div>
         <label htmlFor="images" className="block text-sm font-medium mb-2">
-          上传图片 (最多5张)
+          上传图片
         </label>
         <ImageUpload 
           value={images}
