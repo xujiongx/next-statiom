@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Cat, Wand2, User } from 'lucide-react';
+import { Cat, Wand2, User, Palette } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 export default function ImagePage() {
@@ -26,6 +26,13 @@ export default function ImagePage() {
       icon: <Cat className='h-6 w-6' />,
       description: '随机展示可爱的猫咪图片',
       path: '/subpackages/image/cat',
+    },
+    {
+      id: 'poster',
+      title: 'AI 海报生成',
+      icon: <Palette className='h-6 w-6' />,
+      description: '智能生成营销海报',
+      path: '/subpackages/image/poster',
     },
   ];
 

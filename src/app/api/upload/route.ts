@@ -31,11 +31,36 @@ export const POST = (request: NextRequest) => {
       imgbbFormData.append('key', IMG_BB_API_KEY);
       imgbbFormData.append('image', base64Image);
       
-      // 发送请求到ImgBB API
-      const response = await fetch('https://api.imgbb.com/1/upload', {
+      // 发送请求到ImgBB API，增加超时设置和重试逻辑
+      const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, timeout = 30000) => {
+        // 创建带超时的AbortController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        const updatedOptions = {
+          ...options,
+          signal: controller.signal,
+        };
+        
+        try {
+          const response = await fetch(url, updatedOptions);
+          clearTimeout(timeoutId);
+          return response;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (retries <= 1) throw error;
+          
+          // 等待一段时间后重试
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return fetchWithRetry(url, options, retries - 1, timeout);
+        }
+      };
+      
+      // 使用重试函数发送请求
+      const response = await fetchWithRetry('https://api.imgbb.com/1/upload?key=YOUR_API_KEY', {
         method: 'POST',
         body: imgbbFormData,
-      });
+      }, 3, 60000); // 3次重试，60秒超时
       
       if (!response.ok) {
         throw new Error(`上传失败: ${response.statusText}`);

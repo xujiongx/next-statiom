@@ -16,16 +16,16 @@ const tools = [
     href: '/subpackages/chat',
   },
   {
-    title: '图片处理',
-    description: '智能图片编辑与优化',
-    icon: Image,
-    href: '/subpackages/image',
-  },
-  {
     title: '文字处理',
     description: '智能文本编辑与优化',
     icon: Type,
     href: '/subpackages/text',
+  },
+  {
+    title: '图片处理',
+    description: '智能图片编辑与优化',
+    icon: Image,
+    href: '/subpackages/image',
   },
   {
     title: '趣味游戏',
