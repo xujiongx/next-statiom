@@ -52,8 +52,7 @@ export const DEFAULT_POSTER_DATA: PosterData = {
   subtitleSize: 24,
   descriptionSize: 16,
   imageUrl: '',
-  
-  // 新增样式配置默认值
+  customTexts: [],
   imageOpacity: 20,
   borderRadius: 8,
   enableShadow: true,

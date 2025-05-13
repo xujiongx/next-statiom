@@ -21,6 +21,16 @@ export interface TextPosition {
 }
 
 // 海报数据类型
+export interface TextElement {
+  id: string;
+  content: string;
+  color: string;
+  font: string;
+  size: number;
+  position: TextPosition;
+}
+
+// 修改 PosterData 接口
 export interface PosterData {
   template: string;
   title: string;
@@ -53,6 +63,9 @@ export interface PosterData {
 
   // 是否启用拖拽功能
   enableDrag: boolean;
+
+  // 添加自定义文本元素数组
+  customTexts: TextElement[];
 }
 
 // 从单图片上传组件导入的类型
@@ -63,4 +76,10 @@ export interface UploadedImage {
   size?: number;
 }
 
-export type UpdateValue = string | number | boolean | null | TextPosition;
+export type UpdateValue =
+  | string
+  | number
+  | boolean
+  | null
+  | TextPosition
+  | TextElement[];

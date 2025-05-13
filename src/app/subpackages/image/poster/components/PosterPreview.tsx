@@ -1,6 +1,11 @@
 import { RefObject } from 'react';
 import Image from 'next/image';
-import { PosterData, PosterTemplate, TextPosition, UpdateValue } from '../types';
+import {
+  PosterData,
+  PosterTemplate,
+  TextPosition,
+  UpdateValue,
+} from '../types';
 import { DraggableText } from './DraggableText';
 
 interface PosterPreviewProps {
@@ -10,31 +15,35 @@ interface PosterPreviewProps {
   updatePosterData: (field: keyof PosterData, value: UpdateValue) => void;
 }
 
-export function PosterPreview({ 
-  posterData, 
-  canvasRef, 
+export function PosterPreview({
+  posterData,
+  canvasRef,
   currentTemplate,
-  updatePosterData
+  updatePosterData,
 }: PosterPreviewProps) {
   // 处理文本位置变化
   const handleTitlePositionChange = (newPosition: TextPosition) => {
-  console.log('更新前位置:', posterData.titlePosition);
-  console.log('更新后位置:', newPosition);
+    console.log('更新前位置:', posterData.titlePosition);
+    console.log('更新后位置:', newPosition);
     updatePosterData('titlePosition', newPosition);
   };
-  
+
   const handleSubtitlePositionChange = (newPosition: TextPosition) => {
     updatePosterData('subtitlePosition', newPosition);
   };
-  
+
   const handleDescriptionPositionChange = (newPosition: TextPosition) => {
     updatePosterData('descriptionPosition', newPosition);
   };
-  
+
   // 根据样式设置生成样式对象
   const containerStyle = {
-    borderRadius: posterData.borderRadius ? `${posterData.borderRadius}px` : undefined,
-    boxShadow: posterData.enableShadow ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : 'none',
+    borderRadius: posterData.borderRadius
+      ? `${posterData.borderRadius}px`
+      : undefined,
+    boxShadow: posterData.enableShadow
+      ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+      : 'none',
   };
 
   // 背景样式
@@ -56,14 +65,20 @@ export function PosterPreview({
       <div
         ref={canvasRef}
         className={`${
-          posterData.backgroundStyle === 'gradient' ? currentTemplate.bgColor : ''
+          posterData.backgroundStyle === 'gradient'
+            ? currentTemplate.bgColor
+            : ''
         } w-full aspect-[9/16] rounded-lg overflow-hidden shadow-lg relative`}
         style={{ ...containerStyle, ...backgroundStyle }}
       >
         {posterData.imageUrl && (
-          <div 
+          <div
             className='absolute inset-0 w-full h-full'
-            style={{ opacity: posterData.imageOpacity ? posterData.imageOpacity / 100 : 0.2 }}
+            style={{
+              opacity: posterData.imageOpacity
+                ? posterData.imageOpacity / 100
+                : 0.2,
+            }}
           >
             <Image
               src={posterData.imageUrl}
@@ -80,7 +95,7 @@ export function PosterPreview({
 
         {/* 标题 */}
         <DraggableText
-          id="poster-title"
+          id='poster-title'
           position={posterData.titlePosition}
           onPositionChange={handleTitlePositionChange}
           enabled={posterData.enableDrag}
@@ -98,7 +113,7 @@ export function PosterPreview({
 
         {/* 副标题 */}
         <DraggableText
-          id="poster-subtitle"
+          id='poster-subtitle'
           position={posterData.subtitlePosition}
           onPositionChange={handleSubtitlePositionChange}
           enabled={posterData.enableDrag}
@@ -116,7 +131,7 @@ export function PosterPreview({
 
         {/* 描述 */}
         <DraggableText
-          id="poster-description"
+          id='poster-description'
           position={posterData.descriptionPosition}
           onPositionChange={handleDescriptionPositionChange}
           enabled={posterData.enableDrag}
@@ -131,10 +146,35 @@ export function PosterPreview({
         >
           {posterData.description}
         </DraggableText>
+        {/* 渲染自定义文本元素 */}
+        {posterData.customTexts?.map((text) => (
+          <DraggableText
+            key={text.id}
+            id={text.id}
+            position={text.position}
+            onPositionChange={(newPosition) => {
+              const newCustomTexts = posterData.customTexts.map((t) =>
+                t.id === text.id ? { ...t, position: newPosition } : t
+              );
+              updatePosterData('customTexts', newCustomTexts);
+            }}
+            enabled={posterData.enableDrag}
+            style={{
+              fontFamily: text.font,
+              color: text.color,
+              fontSize: `${text.size}px`,
+              lineHeight: 1.5,
+              textAlign: posterData.textAlign,
+              ...textShadowStyle,
+            }}
+          >
+            {text.content}
+          </DraggableText>
+        ))}
       </div>
-      
+
       {posterData.enableDrag && (
-        <div className="mt-2 text-sm text-gray-500 text-center">
+        <div className='mt-2 text-sm text-gray-500 text-center'>
           提示：可拖动文字调整位置，拖动右下角蓝点调整大小
         </div>
       )}
