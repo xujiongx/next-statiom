@@ -142,7 +142,7 @@ export class CommunityService {
       ...(authorId && { authorId }),
     };
 
-    const filterConditions = [];
+    const filterConditions: string[] = [];
     if (tag) {
       filterConditions.push('contains(.tags, <str>$tag)');
     }

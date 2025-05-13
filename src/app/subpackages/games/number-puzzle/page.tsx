@@ -9,7 +9,10 @@ import { useUserStore } from '@/store/useUserStore';
 export default function NumberPuzzleGame() {
   const { user, updateUser } = useUserStore();
   const [grid, setGrid] = useState<number[][]>([]);
-  const [emptyCell, setEmptyCell] = useState<{ row: number; col: number }>({ row: 3, col: 3 });
+  const [emptyCell, setEmptyCell] = useState<{ row: number; col: number }>({
+    row: 3,
+    col: 3,
+  });
   const [moves, setMoves] = useState(0);
   const [timer, setTimer] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,13 +29,13 @@ export default function NumberPuzzleGame() {
           .fill(null)
           .map((_, colIndex) => rowIndex * 4 + colIndex + 1)
       );
-    
+
     // 将右下角设为0（空白格）
     orderedGrid[3][3] = 0;
-    
+
     // 打乱网格
     const shuffledGrid = shuffleGrid([...orderedGrid]);
-    
+
     setGrid(shuffledGrid);
     // 找到空白格的位置
     for (let row = 0; row < 4; row++) {
@@ -53,48 +56,53 @@ export default function NumberPuzzleGame() {
   const shuffleGrid = (grid: number[][]) => {
     const newGrid = JSON.parse(JSON.stringify(grid)); // 深拷贝
     let empty = { row: 3, col: 3 };
-    
+
     // 执行随机移动来打乱网格
     for (let i = 0; i < 100; i++) {
-      const possibleMoves = [];
-      
-      if (empty.row > 0) possibleMoves.push({ row: empty.row - 1, col: empty.col });
-      if (empty.row < 3) possibleMoves.push({ row: empty.row + 1, col: empty.col });
-      if (empty.col > 0) possibleMoves.push({ row: empty.row, col: empty.col - 1 });
-      if (empty.col < 3) possibleMoves.push({ row: empty.row, col: empty.col + 1 });
-      
-      const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-      
+      const possibleMoves: { row: number; col: number }[] = [];
+
+      if (empty.row > 0)
+        possibleMoves.push({ row: empty.row - 1, col: empty.col });
+      if (empty.row < 3)
+        possibleMoves.push({ row: empty.row + 1, col: empty.col });
+      if (empty.col > 0)
+        possibleMoves.push({ row: empty.row, col: empty.col - 1 });
+      if (empty.col < 3)
+        possibleMoves.push({ row: empty.row, col: empty.col + 1 });
+
+      const randomMove =
+        possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
       // 交换空白格和随机相邻格
       newGrid[empty.row][empty.col] = newGrid[randomMove.row][randomMove.col];
       newGrid[randomMove.row][randomMove.col] = 0;
-      
+
       empty = randomMove;
     }
-    
+
     return newGrid;
   };
 
   // 移动方块
   const moveCell = (row: number, col: number) => {
     if (!isPlaying || isSolved) return;
-    
+
     // 检查是否可以移动（与空白格相邻）
     const isAdjacent =
       (Math.abs(row - emptyCell.row) === 1 && col === emptyCell.col) ||
       (Math.abs(col - emptyCell.col) === 1 && row === emptyCell.row);
-    
+
     if (!isAdjacent) return;
-    
+
     // 移动方块
     const newGrid = JSON.parse(JSON.stringify(grid)); // 深拷贝
     newGrid[emptyCell.row][emptyCell.col] = newGrid[row][col];
     newGrid[row][col] = 0;
-    
+
     setGrid(newGrid);
     setEmptyCell({ row, col });
     setMoves(moves + 1);
-    
+
     // 检查是否完成
     checkIfSolved(newGrid);
   };
@@ -113,15 +121,15 @@ export default function NumberPuzzleGame() {
         }
       }
     }
-    
+
     // 如果所有检查都通过，游戏完成
     setIsPlaying(false);
     setIsSolved(true);
-    
+
     // 更新最佳分数
     if (bestScore === null || moves < bestScore) {
       setBestScore(moves);
-      
+
       // 如果用户已登录，更新用户数据
       if (user) {
         updateUser({
@@ -134,13 +142,13 @@ export default function NumberPuzzleGame() {
   // 计时器
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (isPlaying && !isSolved) {
       interval = setInterval(() => {
-        setTimer(prevTimer => prevTimer + 1);
+        setTimer((prevTimer) => prevTimer + 1);
       }, 1000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -150,7 +158,9 @@ export default function NumberPuzzleGame() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
 
   // 组件挂载时初始化游戏

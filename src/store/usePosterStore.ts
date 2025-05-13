@@ -101,5 +101,3 @@ export const usePosterStore = create<PosterState>((set, get) => ({
     link.click();
   },
 }));
-
-// 将 store 添加到 index.ts 导出
