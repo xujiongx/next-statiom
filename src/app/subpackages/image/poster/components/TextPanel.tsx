@@ -67,9 +67,10 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
         x: 50,
         y: 50,
         width: 50,
+        height: 20,
         isDragging: false,
-        isResizing: false
-      }
+        isResizing: false,
+      },
     };
 
     const newCustomTexts = [...(posterData.customTexts || []), newText];
@@ -167,38 +168,40 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
 
       {/* 自定义文本元素 */}
       {posterData.customTexts?.map((text) => (
-        <div key={text.id} className="relative">
+        <div key={text.id} className='relative'>
           <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-0 top-0"
+            variant='ghost'
+            size='icon'
+            className='absolute right-0 top-0'
             onClick={() => {
-              const newCustomTexts = posterData.customTexts.filter(t => t.id !== text.id);
+              const newCustomTexts = posterData.customTexts.filter(
+                (t) => t.id !== text.id
+              );
               updatePosterData('customTexts', newCustomTexts);
             }}
           >
-            <X className="h-4 w-4" />
+            <X className='h-4 w-4' />
           </Button>
-          
+
           <Label>自定义文本</Label>
           <Input
             value={text.content}
             onChange={(e) => {
-              const newCustomTexts = posterData.customTexts.map(t => 
+              const newCustomTexts = posterData.customTexts.map((t) =>
                 t.id === text.id ? { ...t, content: e.target.value } : t
               );
               updatePosterData('customTexts', newCustomTexts);
             }}
             className='mb-2'
           />
-          
+
           <div className='grid grid-cols-2 gap-2'>
             <div>
               <Label>字体</Label>
               <Select
                 value={text.font}
                 onValueChange={(value) => {
-                  const newCustomTexts = posterData.customTexts.map(t => 
+                  const newCustomTexts = posterData.customTexts.map((t) =>
                     t.id === text.id ? { ...t, font: value } : t
                   );
                   updatePosterData('customTexts', newCustomTexts);
@@ -223,7 +226,7 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
                   type='color'
                   value={text.color}
                   onChange={(e) => {
-                    const newCustomTexts = posterData.customTexts.map(t => 
+                    const newCustomTexts = posterData.customTexts.map((t) =>
                       t.id === text.id ? { ...t, color: e.target.value } : t
                     );
                     updatePosterData('customTexts', newCustomTexts);
@@ -233,7 +236,7 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
                 <Input
                   value={text.color}
                   onChange={(e) => {
-                    const newCustomTexts = posterData.customTexts.map(t => 
+                    const newCustomTexts = posterData.customTexts.map((t) =>
                       t.id === text.id ? { ...t, color: e.target.value } : t
                     );
                     updatePosterData('customTexts', newCustomTexts);
@@ -243,7 +246,7 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
               </div>
             </div>
           </div>
-          
+
           <Label className='mt-2 block'>字号: {text.size}px</Label>
           <Slider
             value={[text.size]}
@@ -251,7 +254,7 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
             max={72}
             step={1}
             onValueChange={(value) => {
-              const newCustomTexts = posterData.customTexts.map(t => 
+              const newCustomTexts = posterData.customTexts.map((t) =>
                 t.id === text.id ? { ...t, size: value[0] } : t
               );
               updatePosterData('customTexts', newCustomTexts);
@@ -262,12 +265,8 @@ export function TextPanel({ posterData, updatePosterData }: TextPanelProps) {
       ))}
 
       {/* 添加文本按钮 */}
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={handleAddText}
-      >
-        <PlusCircle className="mr-2 h-4 w-4" />
+      <Button variant='outline' className='w-full' onClick={handleAddText}>
+        <PlusCircle className='mr-2 h-4 w-4' />
         添加文本
       </Button>
     </div>

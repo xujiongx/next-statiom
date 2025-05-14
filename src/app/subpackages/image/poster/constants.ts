@@ -53,6 +53,7 @@ export const DEFAULT_POSTER_DATA: PosterData = {
   descriptionSize: 16,
   imageUrl: '',
   customTexts: [],
+  customImages: [],
   imageOpacity: 20,
   borderRadius: 8,
   enableShadow: true,
@@ -66,6 +67,7 @@ export const DEFAULT_POSTER_DATA: PosterData = {
     x: 50,
     y: 30,
     width: 80,
+    height: 20, // 添加默认高度
     isDragging: false,
     isResizing: false
   },
@@ -73,6 +75,7 @@ export const DEFAULT_POSTER_DATA: PosterData = {
     x: 50,
     y: 45,
     width: 70,
+    height: 15, // 添加默认高度
     isDragging: false,
     isResizing: false
   },
@@ -80,6 +83,7 @@ export const DEFAULT_POSTER_DATA: PosterData = {
     x: 50,
     y: 70,
     width: 60,
+    height: 25, // 添加默认高度
     isDragging: false,
     isResizing: false
   },

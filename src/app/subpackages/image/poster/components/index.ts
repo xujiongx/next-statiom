@@ -3,3 +3,4 @@ export * from './TextPanel';
 export * from './ImagePanel';
 export * from './PosterPreview';
 export * from './StylePanel';
+export * from './GeneratePanel';

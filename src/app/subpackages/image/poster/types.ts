@@ -16,6 +16,7 @@ export interface TextPosition {
   x: number;
   y: number;
   width: number;
+  height: number;
   isDragging: boolean;
   isResizing: boolean;
 }
@@ -28,6 +29,17 @@ export interface TextElement {
   font: string;
   size: number;
   position: TextPosition;
+}
+
+// 图片元素类型
+export interface ImageElement {
+  id: string;
+  url: string;
+  position: TextPosition; // 复用 TextPosition 类型
+  width: number;
+  height: number;
+  opacity: number;
+  borderRadius: number;
 }
 
 // 修改 PosterData 接口
@@ -66,6 +78,7 @@ export interface PosterData {
 
   // 添加自定义文本元素数组
   customTexts: TextElement[];
+  customImages: ImageElement[];
 }
 
 // 从单图片上传组件导入的类型
@@ -82,4 +95,5 @@ export type UpdateValue =
   | boolean
   | null
   | TextPosition
-  | TextElement[];
+  | TextElement[]
+  | ImageElement[];

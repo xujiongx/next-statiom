@@ -171,6 +171,38 @@ export function PosterPreview({
             {text.content}
           </DraggableText>
         ))}
+        {/* 渲染图片元素 */}
+        {posterData.customImages?.map((image) => (
+          <DraggableText
+            resizeMode='both'
+            key={image.id}
+            id={image.id}
+            position={image.position}
+            onPositionChange={(newPosition) => {
+              const newCustomImages = posterData.customImages.map((img) =>
+                img.id === image.id ? { ...img, position: newPosition } : img
+              );
+              updatePosterData('customImages', newCustomImages);
+            }}
+            enabled={posterData.enableDrag}
+            style={{
+              width: `${image.width}px`,
+              height: `${image.height}px`,
+            }}
+          >
+            <img
+              src={image.url}
+              alt='图片元素'
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: image.opacity,
+                borderRadius: `${image.borderRadius}px`,
+              }}
+            />
+          </DraggableText>
+        ))}
       </div>
 
       {posterData.enableDrag && (

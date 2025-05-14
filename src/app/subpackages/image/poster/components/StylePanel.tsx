@@ -10,14 +10,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PosterData } from '../types';
+import { PosterData, UploadedImage } from '../types';
+import { SingleImageUpload } from '@/components/ui/single-image-upload'
 
 interface StylePanelProps {
   posterData: PosterData;
-  updatePosterData: (field: keyof PosterData, value: string | number | boolean) => void;
+  updatePosterData: (
+    field: keyof PosterData,
+    value: string | number | boolean
+  ) => void;
+  uploadedImage: UploadedImage | null;
+  handleImageChange: (image: UploadedImage | null) => void;
 }
 
-export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
+export function StylePanel({
+  posterData,
+  updatePosterData,
+  uploadedImage,
+  handleImageChange,
+}: StylePanelProps) {
   // 处理背景透明度变化
   const handleOpacityChange = (value: number[]) => {
     updatePosterData('imageOpacity', value[0]);
@@ -59,7 +70,7 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
   const handleDragToggle = (checked: boolean) => {
     updatePosterData('enableDrag', checked);
   };
-  
+
   return (
     <div className='space-y-6 p-4'>
       <div>
@@ -104,16 +115,36 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
           )}
 
           {posterData.backgroundStyle === 'image' && (
-            <div>
-              <Label className='block mb-1'>背景透明度: {posterData.imageOpacity}%</Label>
-              <Slider
-                value={[posterData.imageOpacity]}
-                min={0}
-                max={100}
-                step={5}
-                onValueChange={handleOpacityChange}
-              />
-            </div>
+            <>
+              <div>
+                <Label className='block mb-1'>
+                  背景透明度: {posterData.imageOpacity}%
+                </Label>
+                <Slider
+                  value={[posterData.imageOpacity]}
+                  min={0}
+                  max={100}
+                  step={5}
+                  onValueChange={handleOpacityChange}
+                />
+              </div>
+              {/* 背景图片配置 */}
+              <div className='space-y-4'>
+                <h3 className='text-lg font-medium'>背景图片</h3>
+                <p className='text-sm text-gray-500'>
+                  上传图片作为海报背景，图片将以半透明效果显示
+                </p>
+                <SingleImageUpload
+                  value={uploadedImage}
+                  onChange={handleImageChange}
+                  maxSize={5}
+                  aspectRatio={9 / 16}
+                  placeholder='支持 JPG, PNG 格式，建议使用高清图片'
+                  buttonText='选择背景图片'
+                  enableCrop={true}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -123,7 +154,9 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
 
         <div className='space-y-4'>
           <div>
-            <Label className='block mb-1'>圆角大小: {posterData.borderRadius}px</Label>
+            <Label className='block mb-1'>
+              圆角大小: {posterData.borderRadius}px
+            </Label>
             <Slider
               value={[posterData.borderRadius]}
               min={0}
@@ -183,7 +216,7 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
 
       <div>
         <h3 className='text-lg font-medium mb-3'>交互设置</h3>
-        
+
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
             <Label htmlFor='enableDrag'>启用文字拖拽</Label>
@@ -193,7 +226,7 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
               onCheckedChange={handleDragToggle}
             />
           </div>
-          
+
           {posterData.enableDrag && (
             <p className='text-sm text-gray-500'>
               启用后，您可以在预览区域拖动文字调整位置，并通过右下角的蓝点调整文字大小。
@@ -201,7 +234,7 @@ export function StylePanel({ posterData, updatePosterData }: StylePanelProps) {
           )}
         </div>
       </div>
-      
+
       <div className='pt-4 border-t'>
         <p className='text-sm text-gray-500'>
           更多高级样式设置功能即将上线，敬请期待...
