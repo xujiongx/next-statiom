@@ -513,7 +513,6 @@ const ThreeScene = ({
                         mesh.material.emissive.setHex(0x441111);
                         mesh.scale.set(1, 1, 1);
                     });
-                    clickedMesh.material.emissive.setHex(0xaa6644);
                     clickedMesh.scale.set(1.5, 1.5, 1.5);
                 }
             };
