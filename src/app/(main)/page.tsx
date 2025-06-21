@@ -4,7 +4,7 @@ import {
   Image,
   Gamepad2,
   MoreHorizontal,
-  Type, // 添加文字图标
+  Leaf,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,12 +14,6 @@ const tools = [
     description: '与 AI 助手进行对话',
     icon: MessageSquare,
     href: '/subpackages/chat',
-  },
-  {
-    title: '文字处理',
-    description: '智能文本编辑与优化',
-    icon: Type,
-    href: '/subpackages/text',
   },
   {
     title: '图片处理',
@@ -32,6 +26,12 @@ const tools = [
     description: '休闲小游戏合集',
     icon: Gamepad2,
     href: '/subpackages/games',
+  },
+  {
+    title: '趣味中医',
+    description: '中医知识学习与体质测试',
+    icon: Leaf,
+    href: '/subpackages/tcm',
   },
   {
     title: '更多工具',
