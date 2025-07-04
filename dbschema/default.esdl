@@ -55,4 +55,11 @@ module default {
     # 添加用户关联
     required link user -> User;
   }
+
+  type Image {
+    required property url -> str;
+    required property created_at -> datetime {
+      default := datetime_current();
+    };
+  }
 }

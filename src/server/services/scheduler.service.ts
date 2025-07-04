@@ -323,9 +323,12 @@ export class SchedulerService {
   }
 
   private async syncData(): Promise<void> {
-    console.log("数据同步任务...");
-    // 实现数据同步逻辑
-    // 例如：同步第三方API数据
+    try {
+      const pixabayService = new PixabayService();
+      await pixabayService.syncData(3); // 同步3张图片
+    } catch (error) {
+      console.error('同步数据任务失败:', error);
+    }
   }
 
   // 获取任务状态信息
@@ -364,3 +367,6 @@ export class SchedulerService {
 }
 
 export const schedulerService = new SchedulerService();
+
+// 在文件顶部添加导入
+import { PixabayService } from './pixabay.service';
