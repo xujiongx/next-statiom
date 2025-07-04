@@ -21,7 +21,7 @@ export default function MainLayout({
   return (
     <div className='min-h-screen flex flex-col'>
       <main className='flex-1 pb-20'>{children}</main>
-      <nav className='fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800'>
+      <nav className='fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800'>
         <div className={`h-14 grid ${gridColsClass}`}>
           {TABS.map(({ key, title, icon: Icon }) => (
             <button
