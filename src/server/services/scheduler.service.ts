@@ -18,6 +18,7 @@ interface CreateTaskParams {
   cronExpression: string;
   handler: string;
   isActive?: boolean;
+  userId: string;
 }
 
 export class SchedulerService {
@@ -25,7 +26,7 @@ export class SchedulerService {
 
   // 创建定时任务
   async createTask(params: CreateTaskParams): Promise<ScheduledTask> {
-    const { name, cronExpression, handler, isActive = true } = params;
+    const { name, cronExpression, handler, isActive = true, userId } = params;
 
     // 验证 cron 表达式
     if (!cron.validate(cronExpression)) {
@@ -40,6 +41,7 @@ export class SchedulerService {
         cronExpression := <str>$cronExpression,
         handler := <str>$handler,
         isActive := <bool>$isActive,
+        user := (select User filter .id = <uuid>$userId),
         createdAt := datetime_current()
       }
     ) {
@@ -50,10 +52,11 @@ export class SchedulerService {
       isActive,
       lastRun,
       nextRun,
-      createdAt
+      createdAt,
+      user: { id, username, nickname }
     }
     `,
-      { name, cronExpression, handler, isActive },
+      { name, cronExpression, handler, isActive, userId },
     );
 
     if (isActive) {
@@ -64,22 +67,39 @@ export class SchedulerService {
   }
 
   // 获取所有任务
-  async getAllTasks(): Promise<ScheduledTask[]> {
-    return await client.query<ScheduledTask>(
+  async getAllTasks(userId?: string): Promise<ScheduledTask[]> {
+    const query = userId 
+      ? `
+        select ScheduledTask {
+          id,
+          name,
+          cronExpression,
+          handler,
+          isActive,
+          lastRun,
+          nextRun,
+          createdAt,
+          user: { id, username, nickname }
+        } filter .user.id = <uuid>$userId
+        order by .createdAt desc
       `
-      select ScheduledTask {
-        id,
-        name,
-        cronExpression,
-        handler,
-        isActive,
-        lastRun,
-        nextRun,
-        createdAt
-      }
-      order by .createdAt desc
-      `,
-    );
+      : `
+        select ScheduledTask {
+          id,
+          name,
+          cronExpression,
+          handler,
+          isActive,
+          lastRun,
+          nextRun,
+          createdAt,
+          user: { id, username, nickname }
+        }
+        order by .createdAt desc
+      `;
+    
+    const params = userId ? { userId } : {};
+    return await client.query<ScheduledTask>(query, params);
   }
 
   // 启动任务

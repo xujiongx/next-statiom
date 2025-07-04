@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { schedulerService } from '@/server/services/scheduler.service';
 import { withErrorHandler } from '@/lib/api';
+import { getUserId } from '@/lib/auth';
 
-// 获取所有任务
-export async function GET() {
+// 获取当前用户的所有任务
+export async function GET(request: NextRequest) {
   return withErrorHandler(async () => {
-    const tasks = await schedulerService.getAllTasks();
+    const userId = await getUserId(request);
+    const tasks = await schedulerService.getAllTasks(userId);
     return NextResponse.json({
       code: 0,
       data: {
@@ -18,6 +20,7 @@ export async function GET() {
 // 创建新任务
 export async function POST(request: NextRequest) {
   return withErrorHandler(async () => {
+    const userId = await getUserId(request);
     const body = await request.json();
     const { name, cronExpression, handler, isActive } = body;
 
@@ -32,7 +35,8 @@ export async function POST(request: NextRequest) {
       name,
       cronExpression,
       handler,
-      isActive
+      isActive,
+      userId // 传递用户ID
     });
 
     return NextResponse.json({

@@ -52,5 +52,7 @@ module default {
     required property createdAt -> datetime {
       default := datetime_current();
     };
+    # 添加用户关联
+    required link user -> User;
   }
 }
