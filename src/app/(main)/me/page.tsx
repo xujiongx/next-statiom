@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { authApi, UserInfo } from '@/api/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, MessageSquare, LogOut, ChevronRight } from 'lucide-react';
+import { Moon, Sun, MessageSquare, LogOut, ChevronRight, Calendar } from 'lucide-react';
 
 export default function MePage() {
   const router = useRouter();
@@ -85,8 +85,13 @@ export default function MePage() {
   const menuItems = [
     {
       icon: MessageSquare,
-      label: '我的对话',
-      onClick: () => router.push('/subpackages/chat/history'),
+      label: "我的对话",
+      onClick: () => router.push("/subpackages/chat/history"),
+    },
+    {
+      icon: Calendar,
+      label: "我的任务",
+      onClick: () => router.push("/subpackages/tasks"),
     },
   ];
 

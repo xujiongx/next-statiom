@@ -1,5 +1,4 @@
 'use client';
-import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 const games = [
@@ -48,14 +47,6 @@ export default function GamesPage() {
   return (
     <div className='p-6'>
       <div className='max-w-4xl mx-auto'>
-        <Link
-          href='/'
-          className='inline-flex items-center text-muted-foreground hover:text-foreground mb-6'
-        >
-          <ArrowLeft className='w-4 h-4 mr-2' />
-          返回首页
-        </Link>
-
         <h1 className='text-2xl font-bold mb-8'>趣味游戏</h1>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>

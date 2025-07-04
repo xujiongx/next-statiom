@@ -38,4 +38,19 @@ module default {
       on target delete delete source;
     };
   }
+
+  # 在现有模式中添加
+  type ScheduledTask {
+    required property name -> str;
+    required property cronExpression -> str;
+    required property handler -> str;
+    required property isActive -> bool {
+      default := true;
+    };
+    property lastRun -> datetime;
+    property nextRun -> datetime;
+    required property createdAt -> datetime {
+      default := datetime_current();
+    };
+  }
 }
