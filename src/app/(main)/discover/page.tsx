@@ -1,5 +1,6 @@
 'use client';
 
+import DailyQuote from '@/components/quote/DailyQuote'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WallpaperRecommendation from '@/components/wallpaper/WallpaperRecommendation';
 import { Sparkles, Compass, TrendingUp } from 'lucide-react';
@@ -14,7 +15,7 @@ export default function DiscoverPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400/8 to-blue-400/8 dark:from-cyan-500/5 dark:to-blue-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 p-6 lg:p-8">
+      <div className="relative z-10 p-4 lg:p-8">
         <div className="max-w-7xl mx-auto">
           {/* 现代化页面标题 */}
           <div className="text-center mb-12 lg:mb-16">
@@ -29,16 +30,20 @@ export default function DiscoverPage() {
             </p>
             <div className="flex items-center justify-center gap-2 mt-4">
               <Sparkles className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">每日更新，精选推荐</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                每日更新，精选推荐
+              </span>
             </div>
+          </div>
+
+          {/* 每日一言组件 */}
+          <div className="mb-12 lg:mb-16">
+            <DailyQuote />
           </div>
 
           {/* 今日壁纸推荐模块 */}
           <div className="mb-12 lg:mb-16">
-            <WallpaperRecommendation 
-              limit={3}
-              className="backdrop-blur-sm"
-            />
+            <WallpaperRecommendation limit={3} className="backdrop-blur-sm" />
           </div>
 
           {/* 更多精彩内容模块 */}
@@ -58,12 +63,20 @@ export default function DiscoverPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 border border-orange-100/50 dark:border-orange-800/50">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">AI 艺术创作</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">探索人工智能在艺术创作中的无限可能</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      AI 艺术创作
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      探索人工智能在艺术创作中的无限可能
+                    </p>
                   </div>
                   <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-100/50 dark:border-blue-800/50">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">数字艺术收藏</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">发现独特的数字艺术作品和收藏价值</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      数字艺术收藏
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      发现独特的数字艺术作品和收藏价值
+                    </p>
                   </div>
                   <div className="text-center pt-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-700/80 px-4 py-2 rounded-full">
@@ -89,12 +102,20 @@ export default function DiscoverPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border border-purple-100/50 dark:border-purple-800/50">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">AI 图像生成</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">使用先进的AI技术创造独特的视觉作品</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      AI 图像生成
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      使用先进的AI技术创造独特的视觉作品
+                    </p>
                   </div>
                   <div className="p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-100/50 dark:border-green-800/50">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">智能编辑</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">强大的图像编辑和优化工具</p>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      智能编辑
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      强大的图像编辑和优化工具
+                    </p>
                   </div>
                   <div className="text-center pt-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-700/80 px-4 py-2 rounded-full">
@@ -111,7 +132,10 @@ export default function DiscoverPage() {
             <div className="inline-flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
               <div className="w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full animate-pulse" />
               <span>持续更新中</span>
-              <div className="w-2 h-2 bg-purple-400 dark:bg-purple-500 rounded-full animate-pulse" style={{animationDelay: '0.5s'}} />
+              <div
+                className="w-2 h-2 bg-purple-400 dark:bg-purple-500 rounded-full animate-pulse"
+                style={{ animationDelay: "0.5s" }}
+              />
             </div>
           </div>
         </div>
