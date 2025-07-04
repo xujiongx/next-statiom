@@ -9,8 +9,8 @@ import Loading from '../../subpackages/chat/loading'
 
 
 export const metadata = {
-  title: '社区 | AI工具箱',
-  description: '加入我们的社区，分享和发现AI工具的创新用法',
+  title: "社区 | AI分身",
+  description: "加入我们的社区，分享和发现AI工具的创新用法",
 };
 
 export default function CommunityPage() {

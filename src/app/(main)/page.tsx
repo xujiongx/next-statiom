@@ -20,8 +20,8 @@ const tools = [
     icon: MessageSquare,
     href: '/subpackages/chat',
     gradient: 'from-blue-500 to-indigo-600',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+    iconColor: 'text-blue-600 dark:text-blue-400',
   },
   {
     title: '图片处理',
@@ -29,8 +29,8 @@ const tools = [
     icon: Image,
     href: '/subpackages/image',
     gradient: 'from-emerald-500 to-teal-600',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
   },
   {
     title: '趣味游戏',
@@ -38,8 +38,8 @@ const tools = [
     icon: Gamepad2,
     href: '/subpackages/games',
     gradient: 'from-purple-500 to-violet-600',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+    iconColor: 'text-purple-600 dark:text-purple-400',
   },
   {
     title: '趣味中医',
@@ -47,8 +47,8 @@ const tools = [
     icon: Leaf,
     href: '/subpackages/tcm',
     gradient: 'from-green-500 to-emerald-600',
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100 dark:bg-green-900/30',
+    iconColor: 'text-green-600 dark:text-green-400',
   },
   {
     title: '更多工具',
@@ -56,48 +56,48 @@ const tools = [
     icon: MoreHorizontal,
     href: '/subpackages/tools',
     gradient: 'from-gray-500 to-slate-600',
-    iconBg: 'bg-gray-100',
-    iconColor: 'text-gray-600',
+    iconBg: 'bg-gray-100 dark:bg-gray-800/50',
+    iconColor: 'text-gray-600 dark:text-gray-400',
   },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* 顶部CTA区域 */}
-      <section className="py-12 bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
+      <section className="py-12 bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 dark:from-slate-950 dark:via-purple-950 dark:to-slate-950 text-white relative overflow-hidden">
         {/* 背景装饰 */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 dark:bg-purple-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 dark:bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/10 to-blue-500/10 dark:from-purple-400/5 dark:to-blue-400/5 rounded-full blur-3xl"></div>
         </div>
-        
+
         <div className="max-w-6xl mx-auto text-center px-6 relative z-10">
           <div className="mb-6">
-            <Sparkles className="w-16 h-16 mx-auto text-yellow-400 animate-pulse" />
+            <Sparkles className="w-16 h-16 mx-auto text-yellow-400 dark:text-yellow-300 animate-pulse" />
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white">
-            AI工具箱
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white dark:from-gray-100 dark:via-purple-300 dark:to-gray-100">
+            AI分身
           </h1>
-          <h2 className="text-xl md:text-2xl font-medium mb-4 opacity-95">
+          <h2 className="text-xl md:text-2xl font-medium mb-4 opacity-95 text-white dark:text-gray-100">
             开启AI时代的无限可能
           </h2>
-          <p className="text-xl md:text-2xl opacity-90 mb-12 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl opacity-90 mb-12 max-w-4xl mx-auto leading-relaxed text-white dark:text-gray-200">
             让人工智能成为你最得力的助手，探索前沿的AI技术，提升工作效率和创造力
           </p>
-          <div className='flex flex-col sm:flex-row gap-6 justify-center items-center'>
-            <Button 
-              size="lg" 
-              className='bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:scale-105 transition-all duration-300 px-12 py-4 text-xl font-semibold shadow-xl hover:shadow-2xl w-48'
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white border-0 hover:scale-105 transition-all duration-300 px-12 py-4 text-xl font-semibold shadow-xl hover:shadow-2xl w-48"
             >
               开始探索
-              <ArrowRight className='w-6 h-6' />
+              <ArrowRight className="w-6 h-6" />
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="lg"
-              className='bg-white/10 border-white/20 text-white backdrop-blur-sm px-12 py-4 text-xl font-semibold w-48'
+              className="bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 backdrop-blur-sm px-12 py-4 text-xl font-semibold w-48"
             >
               了解更多
             </Button>
@@ -109,10 +109,10 @@ export default function Home() {
       <section className="py-16 md:py-20 lg:py-24 px-4 md:px-6 relative">
         {/* 添加节标题 */}
         <div className="max-w-7xl mx-auto mb-12 md:mb-16 text-center">
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             精选工具
           </h3>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             探索我们精心打造的AI工具集合，每一个都能为你带来全新的体验
           </p>
         </div>
@@ -122,10 +122,10 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
             {tools.map((tool) => (
               <Link href={tool.href} key={tool.href} className="group">
-                <Card className="h-full bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] overflow-hidden relative">
+                <Card className="h-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-2xl dark:hover:shadow-slate-900/50 transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] overflow-hidden relative">
                   {/* 卡片背景渐变 */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-8 transition-opacity duration-500`}
+                    className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-8 dark:group-hover:opacity-12 transition-opacity duration-500`}
                   ></div>
 
                   <CardHeader className="pb-4 md:pb-6 relative z-10">
@@ -138,7 +138,7 @@ export default function Home() {
                         />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors mb-2 md:mb-3">
+                        <CardTitle className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors mb-2 md:mb-3">
                           {tool.title}
                         </CardTitle>
                         <div
@@ -148,11 +148,11 @@ export default function Home() {
                     </div>
                   </CardHeader>
                   <CardContent className="relative z-10">
-                    <CardDescription className="text-gray-600 text-base md:text-lg leading-relaxed mb-6 md:mb-8">
+                    <CardDescription className="text-gray-600 dark:text-gray-400 text-base md:text-lg leading-relaxed mb-6 md:mb-8">
                       {tool.description}
                     </CardDescription>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm md:text-base font-medium text-gray-500 group-hover:text-gray-700 transition-colors">
+                      <span className="text-sm md:text-base font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                         立即使用
                       </span>
                       <div
@@ -164,10 +164,10 @@ export default function Home() {
                   </CardContent>
 
                   {/* 悬停效果装饰 */}
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white dark:via-slate-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                   {/* 添加底部光效 */}
-                  <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-slate-600 to-transparent"></div>
                 </Card>
               </Link>
             ))}
@@ -175,7 +175,7 @@ export default function Home() {
         </div>
 
         {/* 添加底部装饰 */}
-        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-slate-700 to-transparent"></div>
       </section>
     </main>
   );

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AI工具箱',
-  description: 'AI工具箱',
+  title: 'AI分身',
+  description: 'AI分身',
 };
 
 // 单独导出viewport配置

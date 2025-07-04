@@ -1,4 +1,4 @@
-import { Home, MessageSquare, User, Users } from 'lucide-react';
+import { Home, User, Users } from 'lucide-react';
 
 export const TABS = [
   {
@@ -11,11 +11,11 @@ export const TABS = [
     title: '社区',
     icon: Users,
   },
-  {
-    key: '/message',
-    title: '通知',
-    icon: MessageSquare,
-  },
+  // {
+  //   key: '/message',
+  //   title: '通知',
+  //   icon: MessageSquare,
+  // },
   {
     key: '/me',
     title: '我的',
