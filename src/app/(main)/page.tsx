@@ -8,6 +8,7 @@ import {
   Leaf,
   Sparkles,
   ArrowRight,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,15 @@ const tools = [
     gradient: 'from-blue-500 to-indigo-600',
     iconBg: 'bg-blue-100 dark:bg-blue-900/30',
     iconColor: 'text-blue-600 dark:text-blue-400',
+  },
+  {
+    title: '文字处理',
+    description: '智能文本编辑、格式化与内容优化工具',
+    icon: FileText,
+    href: '/subpackages/text',
+    gradient: 'from-orange-500 to-red-600',
+    iconBg: 'bg-orange-100 dark:bg-orange-900/30',
+    iconColor: 'text-orange-600 dark:text-orange-400',
   },
   {
     title: '图片处理',
