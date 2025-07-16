@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import DailyQuote from '@/components/quote/DailyQuote'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import WallpaperRecommendation from '@/components/wallpaper/WallpaperRecommendation';
-import { Sparkles, Compass, TrendingUp } from 'lucide-react';
+import DailyQuote from "@/components/quote/DailyQuote";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WallpaperRecommendation from "@/components/wallpaper/WallpaperRecommendation";
+import { Sparkles, Compass, TrendingUp } from "lucide-react";
 
 export default function DiscoverPage() {
   return (
@@ -128,7 +128,7 @@ export default function DiscoverPage() {
           </div>
 
           {/* 底部装饰 */}
-          <div className="text-center mt-16 lg:mt-20">
+          <div className="text-center mt-6 lg:mt-20">
             <div className="inline-flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
               <div className="w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full animate-pulse" />
               <span>持续更新中</span>

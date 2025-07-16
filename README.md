@@ -120,3 +120,8 @@ AI
 
 音乐生成
 - https://www.riffusion.com/library/my-songs
+
+
+## 特效
+npx jsrepo add Animations/AnimatedContainer
+npx jsrepo add Animations/MetaBalls
