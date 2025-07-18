@@ -1,8 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
 import { Cat, Wand2, User, Palette } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import PageContainer from '@/components/ui/page-container';
 
 export default function ImagePage() {
   const features = [
@@ -37,23 +36,17 @@ export default function ImagePage() {
   ];
 
   return (
-    <div className='container p-6'>
-      <h1 className='text-2xl font-bold mb-6'>图片工具</h1>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {features.map((feature) => (
-          <Link key={feature.id} href={feature.path}>
-            <Card className='p-4 hover:shadow-lg transition-shadow'>
-              <div className='flex items-center gap-3'>
-                {feature.icon}
-                <div>
-                  <h2 className='font-semibold'>{feature.title}</h2>
-                  <p className='text-sm text-gray-500'>{feature.description}</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <PageContainer
+      title="图片处理工具"
+      description="提供AI图片生成、头像制作、海报设计等多种图片处理功能"
+      features={features}
+      gridCols={{
+        sm: 2,
+        lg: 3,
+        xl: 4,
+        "2xl": 5,
+      }}
+      developmentTipText="更多AI图片功能正在开发中，敬请期待"
+    />
   );
 }

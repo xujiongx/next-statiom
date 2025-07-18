@@ -1,51 +1,38 @@
 "use client";
-import { Sparkles, MessageSquare, Palette } from "lucide-react";
-import Link from "next/link";
 
-const tools = [
-  {
-    title: "OpenRouter 聊天",
-    description: "使用 OpenRouter API 进行对话，体验 GPT-4o 多种模型",
-    icon: MessageSquare,
-    href: "/subpackages/tools/openrouter-chat",
-  },
-  {
-    title: "特效样式展示",
-    description: "探索各种CSS特效和动画效果，包括粒子、渐变、动画等",
-    icon: Palette,
-    href: "/subpackages/tools/effects",
-  },
-  {
-    title: "敬请期待",
-    description: "更多AI工具正在开发",
-    icon: Sparkles,
-    href: "#",
-  },
-];
+import { MessageSquare, Palette } from "lucide-react";
+import PageContainer from "@/components/ui/page-container";
 
 export default function ToolsPage() {
-  return (
-    <main className="container max-w-4xl p-6">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold mb-1">AI 工具箱</h1>
-        <p className="text-sm text-muted-foreground">探索更多实用的 AI 工具</p>
-      </div>
+  const features = [
+    {
+      id: "openrouter-chat",
+      title: "OpenRouter 聊天",
+      icon: <MessageSquare className="h-6 w-6" />,
+      description: "使用 OpenRouter API 进行对话，体验 GPT-4o 多种模型",
+      path: "/subpackages/tools/openrouter-chat",
+    },
+    {
+      id: "effects",
+      title: "特效样式展示",
+      icon: <Palette className="h-6 w-6" />,
+      description: "探索各种CSS特效和动画效果，包括粒子、渐变、动画等",
+      path: "/subpackages/tools/effects",
+    },
+  ];
 
-      <div className="grid grid-cols-2 gap-4">
-        {tools.map((tool) => (
-          <Link href={tool.href} key={tool.href}>
-            <div className="p-4 border rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center gap-2 mb-2">
-                <tool.icon className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">{tool.title}</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {tool.description}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </main>
+  return (
+    <PageContainer
+      title="AI 工具箱"
+      description="探索更多实用的 AI 工具，提升工作效率和创造力"
+      features={features}
+      gridCols={{
+        sm: 1,
+        lg: 2,
+        xl: 3,
+        "2xl": 3,
+      }}
+      developmentTipText="更多强大的AI工具正在开发中，敬请期待"
+    />
   );
 }

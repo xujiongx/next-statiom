@@ -1,8 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
 import { Leaf, Heart, Brain, Stethoscope, BookOpen } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import PageContainer from '@/components/ui/page-container';
 
 export default function TCMPage() {
   const features = [
@@ -44,27 +43,17 @@ export default function TCMPage() {
   ];
 
   return (
-    <div className="container p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-center">趣味中医</h1>
-        <p className="text-gray-600 text-center">传承千年智慧，探索中医奥秘</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature) => (
-          <Link key={feature.id} href={feature.path}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 p-3 bg-green-100 rounded-full">
-                  {feature.icon}
-                </div>
-                <h2 className="text-xl font-semibold mb-2">{feature.title}</h2>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <PageContainer
+      title="趣味中医"
+      description="传承千年智慧，探索中医奥秘，学习传统医学精髓"
+      features={features}
+      gridCols={{
+        sm: 1,
+        lg: 2,
+        xl: 3,
+        "2xl": 3,
+      }}
+      developmentTipText="更多中医功能正在开发中，敬请期待"
+    />
   );
 }

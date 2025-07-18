@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Edit, FileText, Heading, Languages } from "lucide-react";
+import { Edit, FileText, Heading, Languages, Calculator } from "lucide-react";
+import PageContainer from "@/components/ui/page-container";
 
 export default function TextPage() {
   const features = [
@@ -34,26 +33,26 @@ export default function TextPage() {
       description: "优化文章结构和表达",
       path: "/subpackages/text/rewrite",
     },
+    {
+      id: "converter",
+      title: "单位换算",
+      icon: <Calculator className="h-6 w-6" />,
+      description: "长度、重量、温度等单位转换",
+      path: "/subpackages/text/converter",
+    },
   ];
 
   return (
-    <div className="container p-6">
-      <h1 className="text-2xl font-bold mb-6">文字处理</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {features.map((feature) => (
-          <Link key={feature.id} href={feature.path}>
-            <Card className="p-4 hover:shadow-lg transition-shadow">
-              <div className="flex items-center gap-3">
-                {feature.icon}
-                <div>
-                  <h2 className="font-semibold">{feature.title}</h2>
-                  <p className="text-sm text-gray-500">{feature.description}</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <PageContainer
+      title="文字处理工具"
+      description="提供智能翻译、文本生成、单位换算等多种文字处理功能"
+      features={features}
+      gridCols={{
+        sm: 2,
+        lg: 3,
+        xl: 4,
+        "2xl": 5,
+      }}
+    />
   );
 }

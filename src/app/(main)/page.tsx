@@ -97,20 +97,24 @@ export default function Home() {
             让人工智能成为你最得力的助手，探索前沿的AI技术，提升工作效率和创造力
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white border-0 hover:scale-105 transition-all duration-300 px-12 py-4 text-xl font-semibold shadow-xl hover:shadow-2xl w-48"
-            >
-              开始探索
-              <ArrowRight className="w-6 h-6" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 backdrop-blur-sm px-12 py-4 text-xl font-semibold w-48"
-            >
-              了解更多
-            </Button>
+            <Link href="/subpackages/chat">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white border-0 hover:scale-105 transition-all duration-300 px-12 py-4 text-xl font-semibold shadow-xl hover:shadow-2xl w-48"
+              >
+                开始探索
+                <ArrowRight className="w-6 h-6" />
+              </Button>
+            </Link>
+            <Link href="/discover">
+              <Button
+                variant="outline"
+                size="lg"
+                className="bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 text-white  backdrop-blur-sm px-12 py-4 text-xl font-semibold w-48"
+              >
+                了解更多
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
