@@ -1,6 +1,6 @@
 "use client";
 
-import { Cat, Wand2, User, Palette } from 'lucide-react';
+import { Cat, Wand2, User, Palette, Scissors } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 
 export default function ImagePage() {
@@ -18,6 +18,13 @@ export default function ImagePage() {
       icon: <User className='h-6 w-6' />,
       description: '生成个性化的AI头像',
       path: '/subpackages/image/avatar',
+    },
+    {
+      id: 'background-removal',
+      title: 'AI 智能抠图',
+      icon: <Scissors className='h-6 w-6' />,
+      description: '一键去除图片背景，智能抠图处理',
+      path: '/subpackages/image/background-removal',
     },
     {
       id: 'cat',
