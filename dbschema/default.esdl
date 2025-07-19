@@ -62,4 +62,16 @@ module default {
       default := datetime_current();
     };
   }
+
+  # 用户收藏
+  type Favorite {
+    required property title -> str;
+    required property url -> str;
+    required property category -> str;
+    required property created_at -> datetime {
+      default := datetime_current();
+    };
+    # 添加用户关联
+    required link user -> User;
+  }
 }

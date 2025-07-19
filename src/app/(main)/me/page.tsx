@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { authApi, UserInfo } from '@/api/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, MessageSquare, LogOut, ChevronRight, Calendar } from 'lucide-react';
+import { Moon, Sun, MessageSquare, LogOut, ChevronRight, Calendar, Star } from 'lucide-react';
 
 export default function MePage() {
   const router = useRouter();
@@ -92,6 +92,11 @@ export default function MePage() {
       icon: Calendar,
       label: "我的任务",
       onClick: () => router.push("/subpackages/tasks"),
+    },
+    {
+      icon: Star,
+      label: "我的常用",
+      onClick: () => router.push("/subpackages/favorites"),
     },
   ];
 
