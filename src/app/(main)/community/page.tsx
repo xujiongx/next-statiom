@@ -15,53 +15,53 @@ export const metadata = {
 
 export default function CommunityPage() {
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       <CommunityHeader />
 
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mt-8'>
-        <div className='md:col-span-3'>
-          <div className='flex justify-between items-center mb-6'>
-            <h2 className='text-2xl font-bold'>社区讨论</h2>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+        <div className="md:col-span-3">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">社区讨论</h2>
             <Button asChild>
-              <Link href='/subpackages/community/new'>发布帖子</Link>
+              <Link href="/subpackages/community/new">发布帖子</Link>
             </Button>
           </div>
 
-          <Tabs defaultValue='latest' className='mb-6'>
-            <TabsList className='grid w-full grid-cols-3'>
-              <TabsTrigger value='latest'>最新</TabsTrigger>
-              <TabsTrigger value='popular'>热门</TabsTrigger>
-              <TabsTrigger value='following'>关注</TabsTrigger>
+          <Tabs defaultValue="latest" className="mb-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="latest">最新</TabsTrigger>
+              <TabsTrigger value="popular">热门</TabsTrigger>
+              <TabsTrigger value="following">关注</TabsTrigger>
             </TabsList>
-            <TabsContent value='latest'>
+            <TabsContent value="latest">
               <Suspense fallback={<Loading />}>
-                <PostList sortBy='latest' />
+                <PostList sortBy="latest" />
               </Suspense>
             </TabsContent>
-            <TabsContent value='popular'>
+            <TabsContent value="popular">
               <Suspense fallback={<Loading />}>
-                <PostList sortBy='popular' />
+                <PostList sortBy="popular" />
               </Suspense>
             </TabsContent>
-            <TabsContent value='following'>
+            <TabsContent value="following">
               <Suspense fallback={<Loading />}>
-                <PostList sortBy='following' />
+                <PostList sortBy="following" />
               </Suspense>
             </TabsContent>
           </Tabs>
         </div>
 
-        <div className='space-y-6'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow p-4'>
-            <h3 className='text-lg font-medium mb-4'>热门标签</h3>
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <h3 className="text-lg font-medium mb-4">热门标签</h3>
             <Suspense fallback={<Loading />}>
               <TagCloud />
             </Suspense>
           </div>
 
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow p-4'>
-            <h3 className='text-lg font-medium mb-4'>社区指南</h3>
-            <ul className='space-y-2 text-sm'>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <h3 className="text-lg font-medium mb-4">社区指南</h3>
+            <ul className="space-y-2 text-sm">
               <li>尊重他人，保持友善</li>
               <li>分享有价值的内容</li>
               <li>遵守社区规则</li>

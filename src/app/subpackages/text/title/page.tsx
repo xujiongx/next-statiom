@@ -146,17 +146,19 @@ export default function TitlePage() {
   };
 
   return (
-    <main className='container max-w-4xl p-6'>
-      <div className='mb-6'>
-        <h1 className='text-xl font-bold mb-1'>智能标题生成</h1>
-        <p className='text-sm text-muted-foreground'>根据内容生成吸引人的标题</p>
+    <main className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold mb-1">智能标题生成</h1>
+        <p className="text-sm text-muted-foreground">
+          根据内容生成吸引人的标题
+        </p>
       </div>
 
-      <div className='grid gap-6'>
+      <div className="grid gap-6">
         {/* 设置区域 */}
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className='text-sm font-medium mb-2 block'>标题类型</label>
+            <label className="text-sm font-medium mb-2 block">标题类型</label>
             <Select value={titleType} onValueChange={setTitleType}>
               <SelectTrigger>
                 <SelectValue />
@@ -172,7 +174,7 @@ export default function TitlePage() {
           </div>
 
           <div>
-            <label className='text-sm font-medium mb-2 block'>语调风格</label>
+            <label className="text-sm font-medium mb-2 block">语调风格</label>
             <Select value={tone} onValueChange={setTone}>
               <SelectTrigger>
                 <SelectValue />
@@ -190,35 +192,37 @@ export default function TitlePage() {
 
         {/* 内容输入区域 */}
         <div>
-          <label className='text-sm font-medium mb-2 block'>文章内容或关键信息</label>
+          <label className="text-sm font-medium mb-2 block">
+            文章内容或关键信息
+          </label>
           <Textarea
-            placeholder='请输入文章内容、关键词或主要信息，AI将根据这些内容生成合适的标题...'
+            placeholder="请输入文章内容、关键词或主要信息，AI将根据这些内容生成合适的标题..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
-            className='resize-none'
+            className="resize-none"
           />
         </div>
 
         {/* 生成按钮 */}
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <Button
             onClick={handleGenerate}
             disabled={loading || !content.trim()}
-            className='flex items-center gap-2'
+            className="flex items-center gap-2"
           >
-            <Sparkles className='h-4 w-4' />
-            {loading ? '生成中...' : '生成标题'}
+            <Sparkles className="h-4 w-4" />
+            {loading ? "生成中..." : "生成标题"}
           </Button>
-          
+
           {generatedTitles.length > 0 && (
             <Button
-              variant='outline'
+              variant="outline"
               onClick={handleRegenerate}
               disabled={loading}
-              className='flex items-center gap-2'
+              className="flex items-center gap-2"
             >
-              <RefreshCw className='h-4 w-4' />
+              <RefreshCw className="h-4 w-4" />
               重新生成
             </Button>
           )}
@@ -227,20 +231,20 @@ export default function TitlePage() {
         {/* 生成结果区域 */}
         {generatedTitles.length > 0 && (
           <div>
-            <h3 className='text-lg font-semibold mb-4'>生成的标题建议</h3>
-            <div className='grid gap-3'>
+            <h3 className="text-lg font-semibold mb-4">生成的标题建议</h3>
+            <div className="grid gap-3">
               {generatedTitles.map((title, index) => (
-                <Card key={index} className='hover:shadow-md transition-shadow'>
-                  <CardContent className='p-4'>
-                    <div className='flex items-center justify-between gap-4'>
-                      <p className='flex-1 text-sm leading-relaxed'>{title}</p>
+                <Card key={index} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="flex-1 text-sm leading-relaxed">{title}</p>
                       <Button
-                        variant='ghost'
-                        size='sm'
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleCopy(title)}
-                        className='shrink-0 flex items-center gap-1'
+                        className="shrink-0 flex items-center gap-1"
                       >
-                        <Copy className='h-4 w-4' />
+                        <Copy className="h-4 w-4" />
                         复制
                       </Button>
                     </div>

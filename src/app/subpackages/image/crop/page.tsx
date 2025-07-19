@@ -164,7 +164,7 @@ export default function ImageCropPage() {
   }, [originalImage, completedCrop, processingState.isProcessing]);
 
   return (
-    <main className="container mx-auto p-6 max-w-7xl">
+    <main className="container mx-auto max-w-4xl p-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold mb-1 flex items-center gap-2">
           <Crop className="h-6 w-6" />

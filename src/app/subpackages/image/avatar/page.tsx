@@ -80,9 +80,9 @@ export default function AvatarGeneratorPage() {
   };
 
   return (
-    <div className="container max-w-3xl p-6">
+    <div className="container mx-auto max-w-4xl p-6">
       <h1 className="text-2xl font-bold mb-6">AI 头像生成</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -93,9 +93,11 @@ export default function AvatarGeneratorPage() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
-            <p className="text-xs text-gray-500">不同的关键词会生成不同的头像</p>
+            <p className="text-xs text-gray-500">
+              不同的关键词会生成不同的头像
+            </p>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="style">选择风格</Label>
             <Select value={style} onValueChange={setStyle}>
@@ -111,7 +113,7 @@ export default function AvatarGeneratorPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label>随机种子 ({seed})</Label>
             <Slider
@@ -121,27 +123,33 @@ export default function AvatarGeneratorPage() {
               step={1}
               onValueChange={(value) => setSeed(value[0])}
             />
-            <p className="text-xs text-gray-500">如果不输入关键词，将使用此随机种子</p>
+            <p className="text-xs text-gray-500">
+              如果不输入关键词，将使用此随机种子
+            </p>
           </div>
-          
-          <Button 
-            onClick={generateAvatar} 
-            disabled={loading} 
+
+          <Button
+            onClick={generateAvatar}
+            disabled={loading}
             className="w-full"
           >
-            {loading ? '生成中...' : '生成头像'}
+            {loading ? "生成中..." : "生成头像"}
           </Button>
         </div>
-        
+
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-50">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="生成的头像" className="w-full h-full object-cover" />
+              <img
+                src={avatarUrl}
+                alt="生成的头像"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <span className="text-gray-400">头像预览</span>
             )}
           </div>
-          
+
           {avatarUrl && (
             <Button variant="outline" onClick={downloadAvatar}>
               下载头像

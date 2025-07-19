@@ -121,17 +121,19 @@ ${text}
   };
 
   return (
-    <main className='container max-w-6xl p-6'>
-      <div className='mb-6'>
-        <h1 className='text-xl font-bold mb-1'>智能文本摘要</h1>
-        <p className='text-sm text-muted-foreground'>快速生成文本摘要和要点提取</p>
+    <main className="container mx-auto max-w-6xl p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold mb-1">智能文本摘要</h1>
+        <p className="text-sm text-muted-foreground">
+          快速生成文本摘要和要点提取
+        </p>
       </div>
 
-      <div className='grid gap-6'>
+      <div className="grid gap-6">
         {/* 设置区域 */}
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className='text-sm font-medium mb-2 block'>摘要类型</label>
+            <label className="text-sm font-medium mb-2 block">摘要类型</label>
             <Select value={summaryType} onValueChange={setSummaryType}>
               <SelectTrigger>
                 <SelectValue />
@@ -147,7 +149,7 @@ ${text}
           </div>
 
           <div>
-            <label className='text-sm font-medium mb-2 block'>摘要长度</label>
+            <label className="text-sm font-medium mb-2 block">摘要长度</label>
             <Select value={summaryLength} onValueChange={setSummaryLength}>
               <SelectTrigger>
                 <SelectValue />
@@ -164,15 +166,15 @@ ${text}
         </div>
 
         {/* 输入输出区域 */}
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 原文输入 */}
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
-              <label className='text-sm font-medium'>原文内容</label>
-              <div className='flex gap-2'>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">原文内容</label>
+              <div className="flex gap-2">
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={handleClear}
                   disabled={loading}
                 >
@@ -181,53 +183,53 @@ ${text}
               </div>
             </div>
             <Textarea
-              placeholder='请输入需要生成摘要的文本内容...'
+              placeholder="请输入需要生成摘要的文本内容..."
               value={sourceText}
               onChange={(e) => setSourceText(e.target.value)}
               rows={12}
-              className='resize-none'
+              className="resize-none"
             />
-            <div className='flex justify-between items-center text-xs text-muted-foreground'>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
               <span>字数: {sourceText.length}</span>
             </div>
           </div>
 
           {/* 摘要输出 */}
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
-              <label className='text-sm font-medium'>生成摘要</label>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">生成摘要</label>
               {summaryResult && (
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleCopy(summaryResult)}
-                  className='flex items-center gap-1'
+                  className="flex items-center gap-1"
                 >
-                  <Copy className='h-4 w-4' />
+                  <Copy className="h-4 w-4" />
                   复制
                 </Button>
               )}
             </div>
-            <Card className='h-[300px]'>
-              <CardContent className='p-4 h-full'>
+            <Card className="h-[300px]">
+              <CardContent className="p-4 h-full">
                 {summaryResult ? (
-                  <div className='h-full overflow-y-auto'>
-                    <div className='text-sm leading-relaxed whitespace-pre-wrap'>
+                  <div className="h-full overflow-y-auto">
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
                       {summaryResult}
                     </div>
                   </div>
                 ) : (
-                  <div className='h-full flex items-center justify-center text-muted-foreground'>
-                    <div className='text-center'>
-                      <FileText className='h-12 w-12 mx-auto mb-2 opacity-50' />
-                      <p className='text-sm'>摘要将在这里显示</p>
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">摘要将在这里显示</p>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
             {summaryResult && (
-              <div className='text-xs text-muted-foreground'>
+              <div className="text-xs text-muted-foreground">
                 摘要字数: {summaryResult.length}
               </div>
             )}
@@ -235,15 +237,15 @@ ${text}
         </div>
 
         {/* 操作按钮 */}
-        <div className='flex justify-center'>
+        <div className="flex justify-center">
           <Button
             onClick={generateSummary}
             disabled={loading || !sourceText.trim()}
-            size='lg'
-            className='flex items-center gap-2'
+            size="lg"
+            className="flex items-center gap-2"
           >
-            <Sparkles className='h-4 w-4' />
-            {loading ? '生成中...' : '生成摘要'}
+            <Sparkles className="h-4 w-4" />
+            {loading ? "生成中..." : "生成摘要"}
           </Button>
         </div>
       </div>

@@ -41,17 +41,17 @@ export default function ImagePage() {
   };
 
   return (
-    <main className='container max-w-4xl p-6'>
-      <div className='mb-6'>
-        <h1 className='text-xl font-bold mb-1'>AI 图片生成</h1>
-        <p className='text-sm text-muted-foreground'>
+    <main className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold mb-1">AI 图片生成</h1>
+        <p className="text-sm text-muted-foreground">
           输入描述，生成独特的 AI 图片
         </p>
       </div>
 
-      <div className='grid gap-4'>
+      <div className="grid gap-4">
         <Textarea
-          placeholder='描述你想要生成的图片...'
+          placeholder="描述你想要生成的图片..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
@@ -60,26 +60,26 @@ export default function ImagePage() {
         <Button
           onClick={handleGenerate}
           disabled={loading || !prompt.trim()}
-          className='w-full'
+          className="w-full"
         >
           {loading ? (
             <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               生成中...
             </>
           ) : (
-            '生成图片'
+            "生成图片"
           )}
         </Button>
 
         {imageUrl && (
-          <div className='relative aspect-square w-full overflow-hidden rounded-lg border'>
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg border">
             <Image
               src={imageUrl}
               alt={prompt}
               fill
-              className='object-cover'
-              sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               unoptimized={true} // 添加这个属性跳过优化
             />
           </div>

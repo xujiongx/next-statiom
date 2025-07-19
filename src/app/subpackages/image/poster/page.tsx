@@ -81,23 +81,23 @@ export default function PosterPage() {
   };
 
   return (
-    <div className='container p-6'>
-      <h1 className='text-2xl font-bold mb-6'>AI 海报生成</h1>
+    <div className="container mx-auto max-w-7xl p-6">
+      <h1 className="text-2xl font-bold mb-6">AI 海报生成</h1>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左侧编辑区 */}
-        <div className='lg:col-span-2'>
-          <Tabs defaultValue='template' className='w-full'>
-            <TabsList className='grid grid-cols-5 mb-4'>
-              <TabsTrigger value='template'>模板</TabsTrigger>
-              <TabsTrigger value='text'>文本</TabsTrigger>
-              <TabsTrigger value='image'>图片</TabsTrigger>
-              <TabsTrigger value='style'>样式</TabsTrigger>
-              <TabsTrigger value='generate'>生成</TabsTrigger>
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="template" className="w-full">
+            <TabsList className="grid grid-cols-5 mb-4">
+              <TabsTrigger value="template">模板</TabsTrigger>
+              <TabsTrigger value="text">文本</TabsTrigger>
+              <TabsTrigger value="image">图片</TabsTrigger>
+              <TabsTrigger value="style">样式</TabsTrigger>
+              <TabsTrigger value="generate">生成</TabsTrigger>
             </TabsList>
 
             {/* 模板选择 */}
-            <TabsContent value='template' className='space-y-4'>
+            <TabsContent value="template" className="space-y-4">
               <TemplatePanel
                 posterData={posterData}
                 updatePosterData={updatePosterData}
@@ -105,7 +105,7 @@ export default function PosterPage() {
             </TabsContent>
 
             {/* 文本编辑 */}
-            <TabsContent value='text' className='space-y-4'>
+            <TabsContent value="text" className="space-y-4">
               <TextPanel
                 posterData={posterData}
                 updatePosterData={updatePosterData}
@@ -113,7 +113,7 @@ export default function PosterPage() {
             </TabsContent>
 
             {/* 图片上传 */}
-            <TabsContent value='image' className='space-y-4'>
+            <TabsContent value="image" className="space-y-4">
               <ImagePanel
                 posterData={posterData}
                 updatePosterData={updatePosterData}
@@ -121,7 +121,7 @@ export default function PosterPage() {
             </TabsContent>
 
             {/* 样式设置 */}
-            <TabsContent value='style' className='space-y-4'>
+            <TabsContent value="style" className="space-y-4">
               <StylePanel
                 posterData={posterData}
                 updatePosterData={updatePosterData}
@@ -131,7 +131,7 @@ export default function PosterPage() {
             </TabsContent>
 
             {/* 生成海报 */}
-            <TabsContent value='generate' className='space-y-4'>
+            <TabsContent value="generate" className="space-y-4">
               <GeneratePanel
                 loading={loading}
                 posterImage={posterImage}
@@ -143,7 +143,7 @@ export default function PosterPage() {
         </div>
 
         {/* 右侧预览区 */}
-        <div className='lg:col-span-1'>
+        <div className="lg:col-span-1">
           <PosterPreview
             posterData={posterData}
             canvasRef={canvasRef}

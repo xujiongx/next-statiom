@@ -94,28 +94,28 @@ export default function OpenRouterChatPage() {
   };
 
   return (
-    <div className='container max-w-4xl p-6'>
-      <div className='mb-6'>
+    <div className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6">
         <Link
-          href='/subpackages/tools'
-          className='inline-flex items-center text-muted-foreground hover:text-foreground mb-4'
+          href="/subpackages/tools"
+          className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className='w-4 h-4 mr-2' />
+          <ArrowLeft className="w-4 h-4 mr-2" />
           返回工具列表
         </Link>
-        <h1 className='text-2xl font-bold'>OpenRouter 聊天</h1>
-        <p className='text-sm text-muted-foreground mt-1'>
+        <h1 className="text-2xl font-bold">OpenRouter 聊天</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           使用 OpenRouter API 进行对话，体验多种AI模型
         </p>
       </div>
 
       {/* 模型选择器 */}
-      <div className='mb-4'>
-        <div className='flex items-center gap-2'>
-          <span className='text-sm font-medium'>选择模型:</span>
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">选择模型:</span>
           <Select value={selectedModel} onValueChange={handleModelChange}>
-            <SelectTrigger className='w-[200px]'>
-              <SelectValue placeholder='选择模型' />
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="选择模型" />
             </SelectTrigger>
             <SelectContent>
               {models.map((model) => (
@@ -128,10 +128,10 @@ export default function OpenRouterChatPage() {
         </div>
       </div>
 
-      <div className='flex flex-col h-[70vh]'>
-        <div className='flex-1 overflow-y-auto mb-4 p-4 border rounded-lg'>
+      <div className="flex flex-col h-[70vh]">
+        <div className="flex-1 overflow-y-auto mb-4 p-4 border rounded-lg">
           {messages.length === 0 ? (
-            <div className='flex items-center justify-center h-full text-muted-foreground'>
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               <p>发送消息开始对话</p>
             </div>
           ) : (
@@ -139,38 +139,38 @@ export default function OpenRouterChatPage() {
               <Card
                 key={index}
                 className={`p-4 mb-4 ${
-                  message.role === 'user' ? 'bg-primary/10' : 'bg-muted/50'
+                  message.role === "user" ? "bg-primary/10" : "bg-muted/50"
                 }`}
               >
-                <div className='font-semibold mb-1'>
-                  {message.role === 'user' ? '你' : 'AI 助手'}
+                <div className="font-semibold mb-1">
+                  {message.role === "user" ? "你" : "AI 助手"}
                 </div>
-                <div className='whitespace-pre-wrap'>{message.content}</div>
+                <div className="whitespace-pre-wrap">{message.content}</div>
               </Card>
             ))
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSubmit} className='flex gap-2'>
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder='输入消息...'
-            className='flex-1 min-h-[80px]'
+            placeholder="输入消息..."
+            className="flex-1 min-h-[80px]"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit(e);
               }
             }}
           />
           <Button
-            type='submit'
-            className='self-end'
+            type="submit"
+            className="self-end"
             disabled={isLoading || !input.trim()}
           >
-            {isLoading ? '发送中...' : <Send className='w-4 h-4' />}
+            {isLoading ? "发送中..." : <Send className="w-4 h-4" />}
           </Button>
         </form>
       </div>

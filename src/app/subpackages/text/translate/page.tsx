@@ -79,14 +79,14 @@ export default function TranslatePage() {
   };
 
   return (
-    <main className='container max-w-4xl p-6'>
-      <div className='mb-6'>
-        <h1 className='text-xl font-bold mb-1'>智能翻译</h1>
-        <p className='text-sm text-muted-foreground'>支持多语言互译</p>
+    <main className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold mb-1">智能翻译</h1>
+        <p className="text-sm text-muted-foreground">支持多语言互译</p>
       </div>
 
-      <div className='grid gap-4'>
-        <div className='flex items-center gap-4'>
+      <div className="grid gap-4">
+        <div className="flex items-center gap-4">
           <Select value={sourceLang} onValueChange={setSourceLang}>
             <SelectTrigger>
               <SelectValue />
@@ -101,13 +101,13 @@ export default function TranslatePage() {
           </Select>
 
           <Button
-            variant='ghost'
-            size='icon'
+            variant="ghost"
+            size="icon"
             onClick={handleSwitchLanguages}
-            className='shrink-0'
-            title='切换语言'
+            className="shrink-0"
+            title="切换语言"
           >
-            <ArrowLeftRight className='h-4 w-4' />
+            <ArrowLeftRight className="h-4 w-4" />
           </Button>
 
           <Select value={targetLang} onValueChange={setTargetLang}>
@@ -125,7 +125,7 @@ export default function TranslatePage() {
         </div>
 
         <Textarea
-          placeholder='请输入要翻译的文本'
+          placeholder="请输入要翻译的文本"
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
           rows={6}
@@ -135,35 +135,35 @@ export default function TranslatePage() {
           onClick={handleTranslate}
           disabled={loading || !sourceText.trim()}
         >
-          {loading ? '翻译中...' : '翻译'}
+          {loading ? "翻译中..." : "翻译"}
         </Button>
 
-        <div className='relative'>
+        <div className="relative">
           <div>
             <Textarea
-              placeholder='翻译结果'
+              placeholder="翻译结果"
               value={targetText}
               readOnly
               rows={6}
             />
             {targetText && (
-              <div className='flex gap-2 mt-2'>
+              <div className="flex gap-2 mt-2">
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleCopy(targetText)}
                   className="flex items-center gap-2"
                 >
-                  <Copy className='h-4 w-4' />
+                  <Copy className="h-4 w-4" />
                   复制
                 </Button>
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleSpeak(targetText, targetLang)}
                   className="flex items-center gap-2"
                 >
-                  <Volume2 className='h-4 w-4' />
+                  <Volume2 className="h-4 w-4" />
                   朗读
                 </Button>
               </div>

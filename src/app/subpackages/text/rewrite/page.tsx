@@ -138,17 +138,19 @@ ${text}
   };
 
   return (
-    <main className='container max-w-6xl p-6'>
-      <div className='mb-6'>
-        <h1 className='text-xl font-bold mb-1'>智能文本改写</h1>
-        <p className='text-sm text-muted-foreground'>多风格文本改写，提升表达效果</p>
+    <main className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold mb-1">智能文本改写</h1>
+        <p className="text-sm text-muted-foreground">
+          多风格文本改写，提升表达效果
+        </p>
       </div>
 
-      <div className='grid gap-6'>
+      <div className="grid gap-6">
         {/* 设置区域 */}
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className='text-sm font-medium mb-2 block'>改写风格</label>
+            <label className="text-sm font-medium mb-2 block">改写风格</label>
             <Select value={rewriteStyle} onValueChange={setRewriteStyle}>
               <SelectTrigger>
                 <SelectValue />
@@ -164,7 +166,7 @@ ${text}
           </div>
 
           <div>
-            <label className='text-sm font-medium mb-2 block'>改写目的</label>
+            <label className="text-sm font-medium mb-2 block">改写目的</label>
             <Select value={rewritePurpose} onValueChange={setRewritePurpose}>
               <SelectTrigger>
                 <SelectValue />
@@ -181,13 +183,13 @@ ${text}
         </div>
 
         {/* 输入区域 */}
-        <div className='space-y-4'>
-          <div className='flex items-center justify-between'>
-            <label className='text-sm font-medium'>原文内容</label>
-            <div className='flex gap-2'>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">原文内容</label>
+            <div className="flex gap-2">
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={handleClear}
                 disabled={loading}
               >
@@ -196,38 +198,38 @@ ${text}
             </div>
           </div>
           <Textarea
-            placeholder='请输入需要改写的文本内容...'
+            placeholder="请输入需要改写的文本内容..."
             value={sourceText}
             onChange={(e) => setSourceText(e.target.value)}
             rows={8}
-            className='resize-none'
+            className="resize-none"
           />
-          <div className='flex justify-between items-center text-xs text-muted-foreground'>
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
             <span>字数: {sourceText.length}</span>
           </div>
         </div>
 
         {/* 操作按钮 */}
-        <div className='flex justify-center gap-3'>
+        <div className="flex justify-center gap-3">
           <Button
             onClick={generateRewrite}
             disabled={loading || !sourceText.trim()}
-            size='lg'
-            className='flex items-center gap-2'
+            size="lg"
+            className="flex items-center gap-2"
           >
-            <Sparkles className='h-4 w-4' />
-            {loading ? '改写中...' : '开始改写'}
+            <Sparkles className="h-4 w-4" />
+            {loading ? "改写中..." : "开始改写"}
           </Button>
-          
+
           {rewriteResults.length > 0 && (
             <Button
-              variant='outline'
+              variant="outline"
               onClick={handleRegenerate}
               disabled={loading}
-              size='lg'
-              className='flex items-center gap-2'
+              size="lg"
+              className="flex items-center gap-2"
             >
-              <RefreshCw className='h-4 w-4' />
+              <RefreshCw className="h-4 w-4" />
               重新改写
             </Button>
           )}
@@ -235,32 +237,32 @@ ${text}
 
         {/* 改写结果区域 */}
         {rewriteResults.length > 0 && (
-          <div className='space-y-4'>
-            <h3 className='text-lg font-semibold'>改写结果</h3>
-            <div className='grid gap-4'>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">改写结果</h3>
+            <div className="grid gap-4">
               {rewriteResults.map((result, index) => (
-                <Card key={index} className='hover:shadow-md transition-shadow'>
-                  <CardContent className='p-6'>
-                    <div className='space-y-4'>
-                      <div className='flex items-center justify-between'>
-                        <h4 className='font-medium text-sm text-muted-foreground flex items-center gap-2'>
-                          <Edit3 className='h-4 w-4' />
+                <Card key={index} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                          <Edit3 className="h-4 w-4" />
                           版本 {index + 1}
                         </h4>
                         <Button
-                          variant='ghost'
-                          size='sm'
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleCopy(result)}
-                          className='flex items-center gap-1'
+                          className="flex items-center gap-1"
                         >
-                          <Copy className='h-4 w-4' />
+                          <Copy className="h-4 w-4" />
                           复制
                         </Button>
                       </div>
-                      <div className='text-sm leading-relaxed whitespace-pre-wrap border-l-2 border-primary/20 pl-4'>
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap border-l-2 border-primary/20 pl-4">
                         {result}
                       </div>
-                      <div className='text-xs text-muted-foreground'>
+                      <div className="text-xs text-muted-foreground">
                         字数: {result.length}
                       </div>
                     </div>
