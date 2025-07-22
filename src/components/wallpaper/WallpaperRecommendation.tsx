@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, X } from "lucide-react";
+import { Eye } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import ImagePreviewModal from "./ImagePreviewModal";
 
 interface ImageType {
   id: string;
@@ -36,7 +37,7 @@ export default function WallpaperRecommendation({
 }: WallpaperRecommendationProps) {
   const [images, setImages] = useState<ImageType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<ImageType | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const fetchWallpapers = async () => {
     setLoading(true);
@@ -65,36 +66,14 @@ export default function WallpaperRecommendation({
     }
   };
 
-  const downloadImage = async (imageUrl: string, imageName: string) => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `wallpaper-${imageName}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "下载成功",
-        description: "壁纸已保存到本地",
-      });
-    } catch (error) {
-      console.error("下载失败:", error);
-      toast({
-        title: "下载失败",
-        description: "请稍后重试",
-        variant: "destructive",
-      });
-    }
-  };
-
   useEffect(() => {
     fetchWallpapers();
   }, [limit]);
+
+  // 处理图片点击，记录被点击的图片索引
+  const handleImageClick = (index: number) => {
+    setSelectedIndex(index);
+  };
 
   return (
     <>
@@ -129,7 +108,7 @@ export default function WallpaperRecommendation({
                 <div
                   key={image.id}
                   className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl dark:shadow-gray-900/50 dark:hover:shadow-gray-900/70 transition-all duration-500 cursor-pointer transform hover:-translate-y-2 bg-white dark:bg-gray-800"
-                  onClick={() => setSelectedImage(image)}
+                  onClick={() => handleImageClick(index)}
                   style={{
                     animationDelay: `${index * 100}ms`,
                   }}
@@ -149,7 +128,9 @@ export default function WallpaperRecommendation({
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                 <Eye className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">暂无壁纸数据</p>
+              <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
+                暂无壁纸数据
+              </p>
               <Button
                 variant="outline"
                 onClick={fetchWallpapers}
@@ -162,49 +143,13 @@ export default function WallpaperRecommendation({
         </CardContent>
       </Card>
 
-      {/* 现代化图片预览模态框 */}
-      {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300"
-          onClick={() => setSelectedImage(null)}
-        >
-          <div className="relative max-w-6xl max-h-full animate-in zoom-in-95 duration-300">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-gray-800 p-2">
-              <img
-                src={selectedImage.url}
-                alt="壁纸预览"
-                className="max-w-full max-h-[80vh] object-contain rounded-2xl"
-              />
-
-              {/* 关闭按钮 */}
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute top-4 right-4 rounded-full w-10 h-10 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 shadow-lg border-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedImage(null);
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-
-              {/* 下载按钮 */}
-              <Button
-                variant="default"
-                size="sm"
-                className="absolute bottom-4 right-4 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 hover:from-purple-600 hover:to-blue-600 dark:hover:from-purple-500 dark:hover:to-blue-500 text-white border-0 shadow-lg px-6"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  downloadImage(selectedImage.url, selectedImage.id);
-                }}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                下载高清图
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* 使用更新后的图片预览模态框组件 */}
+      {selectedIndex !== null && (
+        <ImagePreviewModal
+          images={images}
+          initialIndex={selectedIndex}
+          onClose={() => setSelectedIndex(null)}
+        />
       )}
 
       <style jsx global>{`
