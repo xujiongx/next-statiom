@@ -9,6 +9,7 @@ interface ImageComparisonProps {
   croppedPreview: string;
   handleDownload: () => void;
   handleReupload: () => void;
+  handleUseAsNewImage?: () => void; // 添加新的属性
 }
 
 export default function ImageComparison({
@@ -18,6 +19,7 @@ export default function ImageComparison({
   croppedPreview,
   handleDownload,
   handleReupload,
+  handleUseAsNewImage,
 }: ImageComparisonProps) {
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -44,6 +46,12 @@ export default function ImageComparison({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">处理结果</h3>
           <div className="flex gap-2">
+            {processedImage && handleUseAsNewImage && (
+              <Button onClick={handleUseAsNewImage} variant="outline" size="sm">
+                <Scissors className="mr-2 h-4 w-4" />
+                作为新图像
+              </Button>
+            )}
             {processedImage && (
               <Button onClick={handleDownload} variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />

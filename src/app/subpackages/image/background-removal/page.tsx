@@ -50,6 +50,7 @@ export default function BackgroundRemovalPage() {
     removeBackgroundAI,
     handleDownload,
     handleReupload,
+    handleUseAsNewImage, // 从钩子中获取新函数
     canProcess,
     imageRef,
     cropImageRef,
@@ -137,6 +138,7 @@ export default function BackgroundRemovalPage() {
               croppedPreview={croppedPreview}
               handleDownload={handleDownload}
               handleReupload={handleReupload}
+              handleUseAsNewImage={handleUseAsNewImage} // 传递新函数给组件
             />
 
             {/* 添加隐藏的图像元素，用于处理 */}

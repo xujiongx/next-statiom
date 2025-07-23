@@ -155,6 +155,40 @@ export function useImageProcessing({
     setCompletedCrop,
   ]);
 
+  // 将处理后的图片设置为新的原始图像
+  const handleUseAsNewImage = useCallback(() => {
+    if (!processedImage) return;
+
+    try {
+      // 设置新的原始图像
+      setOriginalImage(processedImage);
+      // 清除处理后的图像
+      setProcessedImage("");
+      // 重置裁剪状态
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+      // 清除裁剪预览
+      setCroppedPreview("");
+
+      toast({
+        description: "已将抠图结果设置为新图像",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        description: "操作失败，请重试",
+      });
+    }
+  }, [
+    processedImage,
+    setOriginalImage,
+    setProcessedImage,
+    setCrop,
+    setCompletedCrop,
+    setCroppedPreview,
+    toast,
+  ]);
+
   // 计算状态
   const canProcess = useMemo(() => {
     if (selectionMode) {
@@ -181,6 +215,7 @@ export function useImageProcessing({
     removeBackgroundAI,
     handleDownload,
     handleReupload,
+    handleUseAsNewImage, // 添加新函数到返回值
     canProcess,
     onImageLoad,
     imageRef,

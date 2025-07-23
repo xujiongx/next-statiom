@@ -64,7 +64,7 @@ export default function SelectionRemovalPage() {
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      
+
       // 初始化裁剪区域为图片中心的合适大小
       const crop = SelectionRemovalTool.centerCrop(width, height);
       setCrop(crop);
@@ -80,11 +80,12 @@ export default function SelectionRemovalPage() {
     }
 
     try {
-      const processedDataUrl = await SelectionRemovalTool.removeSelectedBackground(
-        imageRef.current,
-        completedCrop,
-        setProcessingState
-      );
+      const processedDataUrl =
+        await SelectionRemovalTool.removeSelectedBackground(
+          imageRef.current,
+          completedCrop,
+          setProcessingState,
+        );
 
       setProcessedImage(processedDataUrl);
 
@@ -157,6 +158,44 @@ export default function SelectionRemovalPage() {
       !processingState.isProcessing
     );
   }, [originalImage, completedCrop, processingState.isProcessing]);
+
+  // 将处理后的图片设置为新的原始图像
+  const handleUseAsNewImage = useCallback(() => {
+    if (!processedImage) return;
+
+    try {
+      // 设置新的原始图像
+      setOriginalImage(processedImage);
+      // 清除处理后的图像
+      setProcessedImage("");
+      // 重置裁剪状态
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+      // 重置处理状态
+      setProcessingState({
+        isProcessing: false,
+        progress: 0,
+        stage: "",
+      });
+
+      toast({
+        description: "已将抠图结果设置为新图像",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        description: "操作失败，请重试",
+      });
+    }
+  }, [
+    processedImage,
+    toast,
+    setOriginalImage,
+    setProcessedImage,
+    setCrop,
+    setCompletedCrop,
+    setProcessingState,
+  ]);
 
   return (
     <main className="container mx-auto p-6 max-w-7xl">
@@ -322,14 +361,24 @@ export default function SelectionRemovalPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">抠图结果</h3>
-                    <Button
-                      onClick={handleDownload}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      下载 PNG
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleUseAsNewImage}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Scissors className="mr-2 h-4 w-4" />
+                        作为新图像
+                      </Button>
+                      <Button
+                        onClick={handleDownload}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        下载 PNG
+                      </Button>
+                    </div>
                   </div>
                   <div className="relative aspect-auto w-full overflow-hidden rounded-lg border bg-gray-50">
                     <div className="absolute inset-0 bg-[linear-gradient(45deg,#f0f0f0_25%,transparent_25%),linear-gradient(-45deg,#f0f0f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f0f0f0_75%),linear-gradient(-45deg,transparent_75%,#f0f0f0_75%)] bg-[length:20px_20px] bg-[0_0,0_10px,10px_-10px,-10px_0px]" />
