@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Download, Scissors } from "lucide-react";
@@ -9,6 +9,7 @@ import ReactCrop, { Crop as CropType, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { SelectionRemovalTool } from "./selectionRemoval";
 import { ProcessingState } from "../background-removal/backgroundRemoval";
+import { useEraser } from "./useEraser"
 
 export default function SelectionRemovalPage() {
   // 状态管理
@@ -27,6 +28,25 @@ export default function SelectionRemovalPage() {
   // Refs
   const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
+  // 使用橡皮擦钩子
+  const {
+    isEraserMode,
+    eraserSize,
+    canvasRef,
+    toggleEraserMode,
+    setEraserSize,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    completeErasing,
+    initCanvas,
+  } = useEraser({
+    size: 20,
+    onProgress: setProcessingState,
+  });
 
   // 文件上传处理
   const handleFileUpload = useCallback(
@@ -100,7 +120,7 @@ export default function SelectionRemovalPage() {
           error instanceof Error ? error.message : "处理失败，请重试",
       });
     }
-  }, [originalImage, completedCrop, toast]);
+  }, [originalImage, completedCrop]);
 
   // 下载处理后的图片
   const handleDownload = useCallback(() => {
@@ -197,6 +217,39 @@ export default function SelectionRemovalPage() {
     setProcessingState,
   ]);
 
+  // 当原始图片变化且处于橡皮擦模式时初始化Canvas
+  useEffect(() => {
+    if (originalImage && isEraserMode) {
+      initCanvas(originalImage).catch((error) => {
+        console.error("初始化Canvas失败:", error);
+        toast({
+          variant: "destructive",
+          description:
+            error instanceof Error ? error.message : "初始化Canvas失败",
+        });
+      });
+    }
+  // 移除initCanvas依赖项，使用空数组或者稳定的依赖项
+  }, [originalImage, isEraserMode, toast]);
+  // 完成橡皮擦操作
+  const handleCompleteErasing = useCallback(() => {
+    const processedDataUrl = completeErasing();
+    if (!processedDataUrl) {
+      toast({
+        variant: "destructive",
+        description: "处理失败，请重试",
+      });
+      return;
+    }
+
+    setProcessedImage(processedDataUrl);
+    toggleEraserMode(); // 退出橡皮擦模式
+
+    toast({
+      description: "橡皮擦处理完成！",
+    });
+  }, [completeErasing, toggleEraserMode, toast]);
+  
   return (
     <main className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
@@ -253,26 +306,107 @@ export default function SelectionRemovalPage() {
                 </p>
               </div>
 
-              <div className="relative overflow-hidden bg-gray-100 rounded-md">
-                <ReactCrop
-                  crop={crop}
-                  onChange={(c) => setCrop(c)}
-                  onComplete={(c) => setCompletedCrop(c)}
-                  aspect={undefined}
-                  className="max-w-full"
+              {/* 添加橡皮擦模式切换按钮 */}
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  onClick={toggleEraserMode}
+                  variant={isEraserMode ? "default" : "outline"}
+                  size="sm"
+                  className="flex items-center gap-2"
                 >
-                  <img
-                    ref={imageRef}
-                    src={originalImage}
-                    alt="原始图片"
-                    onLoad={onImageLoad}
-                    style={{ maxWidth: "100%", maxHeight: "500px" }}
-                    crossOrigin="anonymous"
-                  />
-                </ReactCrop>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m18 13-5 5a2.83 2.83 0 0 1-4 0l-5-5a2.83 2.83 0 0 1 0-4l8-8a2.83 2.83 0 0 1 4 0l5 5a2.83 2.83 0 0 1 0 4l-8 8" />
+                    <path d="M15 9 9 15" />
+                  </svg>
+                  {isEraserMode ? "退出橡皮擦模式" : "使用橡皮擦"}
+                </Button>
+                
+                {isEraserMode && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">橡皮擦大小:</span>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      value={eraserSize}
+                      onChange={(e) => setEraserSize(Number(e.target.value))}
+                      className="w-24"
+                    />
+                    <span className="text-xs text-gray-500">{eraserSize}px</span>
+                  </div>
+                )}
               </div>
 
-              {completedCrop && (
+              <div className="relative overflow-hidden bg-gray-100 rounded-md">
+                {/* 原始图片和裁剪区域 */}
+                {!isEraserMode ? (
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(c) => setCrop(c)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={undefined}
+                    className="max-w-full"
+                  >
+                    <img
+                      ref={imageRef}
+                      src={originalImage}
+                      alt="原始图片"
+                      onLoad={onImageLoad}
+                      style={{ maxWidth: "100%", maxHeight: "500px" }}
+                      crossOrigin="anonymous"
+                    />
+                  </ReactCrop>
+                ) : (
+                  /* 橡皮擦Canvas */
+                  <div className="relative">
+                    <canvas
+                      ref={canvasRef}
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      className="max-w-full max-h-[500px] cursor-crosshair"
+                      style={{ 
+                        touchAction: "none",
+                        width: "100%",
+                        height: "auto",
+                        display: "block"
+                      }}
+                    />
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <Button
+                        onClick={handleCompleteErasing}
+                        size="sm"
+                        variant="default"
+                      >
+                        完成
+                      </Button>
+                      <Button
+                        onClick={toggleEraserMode}
+                        size="sm"
+                        variant="outline"
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {completedCrop && !isEraserMode && (
                 <div className="mt-4 text-sm text-gray-500">
                   选区: X: {Math.round(completedCrop.x)}, Y:{" "}
                   {Math.round(completedCrop.y)}, 宽:{" "}
@@ -281,47 +415,50 @@ export default function SelectionRemovalPage() {
                 </div>
               )}
 
-              <Button
-                onClick={handleRemoveBackground}
-                disabled={!canProcess}
-                className="w-full mt-4"
-                size="lg"
-              >
-                {processingState.isProcessing ? (
-                  <>
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span className="animate-pulse">
-                        {processingState.stage}
+              {/* 抠图按钮 */}
+              {!isEraserMode && (
+                <Button
+                  onClick={handleRemoveBackground}
+                  disabled={!canProcess}
+                  className="w-full mt-4"
+                  size="lg"
+                >
+                  {processingState.isProcessing ? (
+                    <>
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span className="animate-pulse">
+                          {processingState.stage}
+                        </span>
                       </span>
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Scissors className="mr-2 h-5 w-5" />
-                    开始抠图
-                  </>
-                )}
-              </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Scissors className="mr-2 h-5 w-5" />
+                      开始抠图
+                    </>
+                  )}
+                </Button>
+              )}
 
               {/* 处理进度条 */}
               {processingState.isProcessing && (
