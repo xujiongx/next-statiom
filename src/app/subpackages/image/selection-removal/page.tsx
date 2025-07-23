@@ -3,23 +3,41 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Download, Scissors } from "lucide-react";
-import NextImage from "next/image";
-import ReactCrop, { Crop as CropType, PixelCrop } from "react-image-crop";
+import { Scissors } from "lucide-react";
+import { Crop as CropType, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { SelectionRemovalTool } from "./selectionRemoval";
-import { ProcessingState } from "../background-removal/backgroundRemoval";
-import { useEraser } from "./useEraser"
+
+// 自定义钩子
+import { useEraser } from "./useEraser";
+import { useImageUpload } from "./hooks/useImageUpload";
+import { useImageProcessing } from "./hooks/useImageProcessing";
+
+// 组件
+import { ImageUploader } from "./components/ImageUploader";
+import { ImageCropper } from "./components/ImageCropper";
+import { EraserCanvas } from "./components/EraserCanvas";
+import { ProcessingControls } from "./components/ProcessingControls";
+import { ResultComparison } from "./components/ResultComparison";
 
 export default function SelectionRemovalPage() {
-  // 状态管理
-  const [originalImage, setOriginalImage] = useState<string>("");
-  const [processedImage, setProcessedImage] = useState<string>("");
-  const [processingState, setProcessingState] = useState<ProcessingState>({
-    isProcessing: false,
-    progress: 0,
-    stage: "",
-  });
+  // 使用自定义钩子
+  const {
+    originalImage,
+    setOriginalImage,
+    handleFileUpload,
+    handleDragOver,
+    handleDrop,
+  } = useImageUpload();
+
+  const {
+    processedImage,
+    setProcessedImage,
+    processingState,
+    setProcessingState,
+    handleRemoveBackground,
+    handleDownload,
+    resetProcessing,
+  } = useImageProcessing();
 
   // 裁剪状态
   const [crop, setCrop] = useState<CropType>();
@@ -28,6 +46,7 @@ export default function SelectionRemovalPage() {
   // Refs
   const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
+
   // 使用橡皮擦钩子
   const {
     isEraserMode,
@@ -48,136 +67,48 @@ export default function SelectionRemovalPage() {
     onProgress: setProcessingState,
   });
 
-  // 文件上传处理
-  const handleFileUpload = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = event.target.files?.[0];
-      if (!selectedFile) return;
-
-      const validationError = SelectionRemovalTool.validateFile(selectedFile);
-      if (validationError) {
+  // 当原始图片变化且处于橡皮擦模式时初始化Canvas
+  useEffect(() => {
+    if (originalImage && isEraserMode) {
+      initCanvas(originalImage).catch((error) => {
+        console.error("初始化Canvas失败:", error);
         toast({
           variant: "destructive",
-          description: validationError,
+          description:
+            error instanceof Error ? error.message : "初始化Canvas失败",
         });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        setOriginalImage(dataUrl);
-        setProcessedImage("");
-      };
-      reader.onerror = () => {
-        toast({
-          variant: "destructive",
-          description: "文件读取失败，请重试",
-        });
-      };
-      reader.readAsDataURL(selectedFile);
-    },
-    [toast],
-  );
-
-  // 图片加载完成后初始化裁剪区域
-  const onImageLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const { width, height } = e.currentTarget;
-
-      // 初始化裁剪区域为图片中心的合适大小
-      const crop = SelectionRemovalTool.centerCrop(width, height);
-      setCrop(crop);
-      setCompletedCrop(crop);
-    },
-    [],
-  );
+      });
+    }
+  }, [originalImage, isEraserMode, toast]); // 移除initCanvas依赖项
 
   // 处理抠图
-  const handleRemoveBackground = useCallback(async () => {
+  const handleProcessImage = useCallback(() => {
+    console.log("🚶", originalImage, imageRef.current, completedCrop);
     if (!originalImage || !imageRef.current || !completedCrop) {
       return;
     }
+    handleRemoveBackground(imageRef.current, completedCrop);
+  }, [originalImage, completedCrop, handleRemoveBackground]);
 
-    try {
-      const processedDataUrl =
-        await SelectionRemovalTool.removeSelectedBackground(
-          imageRef.current,
-          completedCrop,
-          setProcessingState,
-        );
-
-      setProcessedImage(processedDataUrl);
-
-      toast({
-        description: "框选区域抠图完成！",
-      });
-    } catch (error) {
-      console.error("处理失败:", error);
+  // 完成橡皮擦操作
+  const handleCompleteErasing = useCallback(() => {
+    const processedDataUrl = completeErasing();
+    if (!processedDataUrl) {
       toast({
         variant: "destructive",
-        description:
-          error instanceof Error ? error.message : "处理失败，请重试",
+        description: "处理失败，请重试",
       });
+      return;
     }
-  }, [originalImage, completedCrop]);
 
-  // 下载处理后的图片
-  const handleDownload = useCallback(() => {
-    if (!processedImage) return;
+    // 直接将擦除后的图像设置为新的原始图像，而不是设置为处理后的图像
+    setOriginalImage(processedDataUrl);
+    toggleEraserMode(); // 退出橡皮擦模式
 
-    try {
-      SelectionRemovalTool.downloadImage(processedImage);
-
-      toast({
-        description: "图片下载成功！",
-      });
-    } catch {
-      toast({
-        variant: "destructive",
-        description: "下载失败，请重试",
-      });
-    }
-  }, [processedImage, toast]);
-
-  // 拖拽处理
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        const file = files[0];
-        const validationError = SelectionRemovalTool.validateFile(file);
-        if (validationError) {
-          toast({
-            variant: "destructive",
-            description: validationError,
-          });
-          return;
-        }
-
-        const event = {
-          target: { files: [file] },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        handleFileUpload(event);
-      }
-    },
-    [handleFileUpload, toast],
-  );
-
-  // 计算状态
-  const canProcess = useMemo(() => {
-    return (
-      originalImage &&
-      completedCrop?.width &&
-      completedCrop?.height &&
-      !processingState.isProcessing
-    );
-  }, [originalImage, completedCrop, processingState.isProcessing]);
+    toast({
+      description: "橡皮擦处理完成！",
+    });
+  }, [completeErasing, toggleEraserMode, toast, setOriginalImage]);
 
   // 将处理后的图片设置为新的原始图像
   const handleUseAsNewImage = useCallback(() => {
@@ -192,11 +123,7 @@ export default function SelectionRemovalPage() {
       setCrop(undefined);
       setCompletedCrop(undefined);
       // 重置处理状态
-      setProcessingState({
-        isProcessing: false,
-        progress: 0,
-        stage: "",
-      });
+      resetProcessing();
 
       toast({
         description: "已将抠图结果设置为新图像",
@@ -212,44 +139,19 @@ export default function SelectionRemovalPage() {
     toast,
     setOriginalImage,
     setProcessedImage,
-    setCrop,
-    setCompletedCrop,
-    setProcessingState,
+    resetProcessing,
   ]);
 
-  // 当原始图片变化且处于橡皮擦模式时初始化Canvas
-  useEffect(() => {
-    if (originalImage && isEraserMode) {
-      initCanvas(originalImage).catch((error) => {
-        console.error("初始化Canvas失败:", error);
-        toast({
-          variant: "destructive",
-          description:
-            error instanceof Error ? error.message : "初始化Canvas失败",
-        });
-      });
-    }
-  // 移除initCanvas依赖项，使用空数组或者稳定的依赖项
-  }, [originalImage, isEraserMode, toast]);
-  // 完成橡皮擦操作
-  const handleCompleteErasing = useCallback(() => {
-    const processedDataUrl = completeErasing();
-    if (!processedDataUrl) {
-      toast({
-        variant: "destructive",
-        description: "处理失败，请重试",
-      });
-      return;
-    }
+  // 计算状态
+  const canProcess = useMemo(() => {
+    return (
+      originalImage &&
+      completedCrop?.width &&
+      completedCrop?.height &&
+      !processingState.isProcessing
+    );
+  }, [originalImage, completedCrop, processingState.isProcessing]);
 
-    setProcessedImage(processedDataUrl);
-    toggleEraserMode(); // 退出橡皮擦模式
-
-    toast({
-      description: "橡皮擦处理完成！",
-    });
-  }, [completeErasing, toggleEraserMode, toast]);
-  
   return (
     <main className="container mx-auto p-6 max-w-7xl">
       <div className="mb-6">
@@ -265,36 +167,12 @@ export default function SelectionRemovalPage() {
       <div className="grid gap-6">
         {/* 上传区域 */}
         {!originalImage ? (
-          <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
+          <ImageUploader
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-              disabled={processingState.isProcessing}
-            />
-            <label
-              htmlFor="file-upload"
-              className={`cursor-pointer ${
-                processingState.isProcessing
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">
-                点击上传或拖拽图片到此处
-              </p>
-              <p className="text-sm text-gray-500">
-                支持 JPG、PNG、WEBP 格式，最大 10MB
-              </p>
-            </label>
-          </div>
+            onFileUpload={handleFileUpload}
+            isProcessing={processingState.isProcessing}
+          />
         ) : (
           <div className="space-y-6">
             {/* 裁剪区域 */}
@@ -330,7 +208,7 @@ export default function SelectionRemovalPage() {
                   </svg>
                   {isEraserMode ? "退出橡皮擦模式" : "使用橡皮擦"}
                 </Button>
-                
+
                 {isEraserMode && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">橡皮擦大小:</span>
@@ -342,7 +220,9 @@ export default function SelectionRemovalPage() {
                       onChange={(e) => setEraserSize(Number(e.target.value))}
                       className="w-24"
                     />
-                    <span className="text-xs text-gray-500">{eraserSize}px</span>
+                    <span className="text-xs text-gray-500">
+                      {eraserSize}px
+                    </span>
                   </div>
                 )}
               </div>
@@ -350,59 +230,28 @@ export default function SelectionRemovalPage() {
               <div className="relative overflow-hidden bg-gray-100 rounded-md">
                 {/* 原始图片和裁剪区域 */}
                 {!isEraserMode ? (
-                  <ReactCrop
+                  <ImageCropper
+                    ref={imageRef}
+                    imageUrl={originalImage}
                     crop={crop}
-                    onChange={(c) => setCrop(c)}
-                    onComplete={(c) => setCompletedCrop(c)}
-                    aspect={undefined}
-                    className="max-w-full"
-                  >
-                    <img
-                      ref={imageRef}
-                      src={originalImage}
-                      alt="原始图片"
-                      onLoad={onImageLoad}
-                      style={{ maxWidth: "100%", maxHeight: "500px" }}
-                      crossOrigin="anonymous"
-                    />
-                  </ReactCrop>
+                    setCrop={setCrop}
+                    setCompletedCrop={setCompletedCrop}
+                  />
                 ) : (
                   /* 橡皮擦Canvas */
-                  <div className="relative">
-                    <canvas
-                      ref={canvasRef}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
-                      className="max-w-full max-h-[500px] cursor-crosshair"
-                      style={{ 
-                        touchAction: "none",
-                        width: "100%",
-                        height: "auto",
-                        display: "block"
-                      }}
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <Button
-                        onClick={handleCompleteErasing}
-                        size="sm"
-                        variant="default"
-                      >
-                        完成
-                      </Button>
-                      <Button
-                        onClick={toggleEraserMode}
-                        size="sm"
-                        variant="outline"
-                      >
-                        取消
-                      </Button>
-                    </div>
-                  </div>
+                  <EraserCanvas
+                    canvasRef={canvasRef}
+                    eraserSize={eraserSize}
+                    setEraserSize={setEraserSize}
+                    handleMouseDown={handleMouseDown}
+                    handleMouseMove={handleMouseMove}
+                    handleMouseUp={handleMouseUp}
+                    handleTouchStart={handleTouchStart}
+                    handleTouchMove={handleTouchMove}
+                    handleTouchEnd={handleTouchEnd}
+                    onComplete={handleCompleteErasing}
+                    onCancel={toggleEraserMode}
+                  />
                 )}
               </div>
 
@@ -417,119 +266,22 @@ export default function SelectionRemovalPage() {
 
               {/* 抠图按钮 */}
               {!isEraserMode && (
-                <Button
-                  onClick={handleRemoveBackground}
-                  disabled={!canProcess}
-                  className="w-full mt-4"
-                  size="lg"
-                >
-                  {processingState.isProcessing ? (
-                    <>
-                      <span className="flex items-center justify-center">
-                        <svg
-                          className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        <span className="animate-pulse">
-                          {processingState.stage}
-                        </span>
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Scissors className="mr-2 h-5 w-5" />
-                      开始抠图
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {/* 处理进度条 */}
-              {processingState.isProcessing && (
-                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden mt-4">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out flex items-center justify-end"
-                    style={{ width: `${processingState.progress}%` }}
-                  >
-                    <div className="h-2 w-2 bg-white rounded-full mr-0.5 animate-pulse"></div>
-                  </div>
-                  <div className="text-xs text-center mt-1 text-gray-600">
-                    {processingState.stage}
-                  </div>
-                </div>
+                <ProcessingControls
+                  onProcess={handleProcessImage}
+                  canProcess={!!canProcess}
+                  processingState={processingState}
+                />
               )}
             </div>
 
             {/* 图片对比区域 */}
             {processedImage && (
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* 原图 */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium">原图</h3>
-                  <div className="relative aspect-auto w-full overflow-hidden rounded-lg border bg-gray-50">
-                    <NextImage
-                      src={originalImage}
-                      alt="原图"
-                      width={500}
-                      height={500}
-                      className="max-w-full max-h-[400px] object-contain"
-                      unoptimized
-                    />
-                  </div>
-                </div>
-
-                {/* 处理后的图片 */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">抠图结果</h3>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleUseAsNewImage}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Scissors className="mr-2 h-4 w-4" />
-                        作为新图像
-                      </Button>
-                      <Button
-                        onClick={handleDownload}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        下载 PNG
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="relative aspect-auto w-full overflow-hidden rounded-lg border bg-gray-50">
-                    <div className="absolute inset-0 bg-[linear-gradient(45deg,#f0f0f0_25%,transparent_25%),linear-gradient(-45deg,#f0f0f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f0f0f0_75%),linear-gradient(-45deg,transparent_75%,#f0f0f0_75%)] bg-[length:20px_20px] bg-[0_0,0_10px,10px_-10px,-10px_0px]" />
-                    <NextImage
-                      src={processedImage}
-                      alt="抠图结果"
-                      width={500}
-                      height={500}
-                      className="max-w-full max-h-[400px] object-contain relative z-10"
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              </div>
+              <ResultComparison
+                originalImage={originalImage}
+                processedImage={processedImage}
+                onUseAsNewImage={handleUseAsNewImage}
+                onDownload={handleDownload}
+              />
             )}
           </div>
         )}

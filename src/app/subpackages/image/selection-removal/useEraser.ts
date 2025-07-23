@@ -33,12 +33,12 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
   } | null>(null);
 
   // Refs
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   // 添加缩放比例状态
   const [scale, setScale] = useState<{ x: number; y: number }>({ x: 1, y: 1 });
-  
+
   // 修改初始化Canvas函数
   const initCanvas = useCallback(
     async (imageDataUrl: string): Promise<void> => {
@@ -65,18 +65,29 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
           // 绘制图片到canvas
           ctx.drawImage(img, 0, 0, img.width, img.height);
           ctxRef.current = ctx;
-          
-          // 延迟计算缩放比例，确保Canvas已经渲染
-          setTimeout(() => {
-            const containerWidth = canvas.clientWidth || img.width;
-            const containerHeight = canvas.clientHeight || img.height;
+
+          // 计算缩放比例的函数
+          const calculateScale = () => {
+            // 获取canvas的显示尺寸
+            const containerWidth = canvas.clientWidth;
+            const containerHeight = canvas.clientHeight;
             
-            // 避免除以零
-            const scaleX = containerWidth ? img.width / containerWidth : 1;
-            const scaleY = containerHeight ? img.height / containerHeight : 1;
+            // 如果显示尺寸为0，说明Canvas还没有完全渲染，延迟重试
+            if (containerWidth === 0 || containerHeight === 0) {
+              setTimeout(calculateScale, 50);
+              return;
+            }
             
+            // 计算缩放比例 - 原始尺寸与显示尺寸的比例
+            const scaleX = img.width / containerWidth;
+            const scaleY = img.height / containerHeight;
+            
+            // 更新缩放比例状态
             setScale({ x: scaleX, y: scaleY });
-          }, 0);
+          };
+          
+          // 立即调用一次，如果Canvas已渲染则直接计算
+          calculateScale();
 
           options.onProgress?.({
             isProcessing: false,
@@ -100,7 +111,7 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
         img.src = imageDataUrl;
       });
     },
-    [options],
+    [options]
   );
 
   // 切换橡皮擦模式
@@ -161,7 +172,7 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
 
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
-      
+
       // 应用缩放比例
       const x = (e.clientX - rect.left) * scale.x;
       const y = (e.clientY - rect.top) * scale.y;
@@ -177,7 +188,7 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
 
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
-      
+
       // 应用缩放比例
       const x = (e.clientX - rect.left) * scale.x;
       const y = (e.clientY - rect.top) * scale.y;
@@ -201,7 +212,7 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
       const touch = e.touches[0];
-      
+
       // 应用缩放比例
       const x = (touch.clientX - rect.left) * scale.x;
       const y = (touch.clientY - rect.top) * scale.y;
@@ -220,7 +231,7 @@ export function useEraser(options: EraserOptions = {}): UseEraserResult {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
       const touch = e.touches[0];
-      
+
       // 应用缩放比例
       const x = (touch.clientX - rect.left) * scale.x;
       const y = (touch.clientY - rect.top) * scale.y;
