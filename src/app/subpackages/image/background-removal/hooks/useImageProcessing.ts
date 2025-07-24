@@ -47,19 +47,18 @@ export function useImageProcessing({
   const { toast } = useToast();
 
   // 图片加载完成后初始化裁剪区域
-  const onImageLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      if (selectionMode) {
-        const { width, height } = e.currentTarget;
-
-        // 初始化裁剪区域为图片中心的合适大小
-        const crop = SelectionRemovalTool.centerCrop(width, height);
-        setCrop(crop);
-        setCompletedCrop(crop);
-      }
-    },
-    [selectionMode, setCrop, setCompletedCrop],
-  );
+  // 移除这个函数，避免重复初始化
+  // const onImageLoad = useCallback(
+  //   (e: React.SyntheticEvent<HTMLImageElement>) => {
+  //     if (selectionMode) {
+  //       const { width, height } = e.currentTarget;
+  //       const crop = SelectionRemovalTool.centerCrop(width, height);
+  //       setCrop(crop);
+  //       setCompletedCrop(crop);
+  //     }
+  //   },
+  //   [selectionMode, setCrop, setCompletedCrop],
+  // );
 
   // AI 背景移除
   const removeBackgroundAI = useCallback(async () => {
@@ -215,9 +214,9 @@ export function useImageProcessing({
     removeBackgroundAI,
     handleDownload,
     handleReupload,
-    handleUseAsNewImage, // 添加新函数到返回值
+    handleUseAsNewImage,
     canProcess,
-    onImageLoad,
+    // onImageLoad, // 移除这个返回值
     imageRef,
     cropImageRef,
   };

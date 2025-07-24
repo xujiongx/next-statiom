@@ -9,7 +9,7 @@ interface SelectionCropperProps {
   setCompletedCrop: (crop: PixelCrop) => void;
   completedCrop?: PixelCrop;
   updateCroppedPreview: (image: HTMLImageElement, crop: PixelCrop) => void;
-  cropImageRef: React.RefObject<HTMLImageElement | null>; // 添加外部传入的引用
+  cropImageRef: React.RefObject<HTMLImageElement | null>;
 }
 
 export default function SelectionCropper({
@@ -19,47 +19,71 @@ export default function SelectionCropper({
   setCompletedCrop,
   completedCrop,
   updateCroppedPreview,
-  cropImageRef, // 使用外部传入的引用
+  cropImageRef,
 }: SelectionCropperProps) {
-  // 添加节流控制
-  const throttleTimeoutRef = useRef<number | null>(null);
+  // 优化节流控制
+  const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateTimeRef = useRef<number>(0);
   
-  // 使用节流函数包装预览更新
+  // 使用更高效的节流函数
   const throttledUpdatePreview = useCallback(
     (image: HTMLImageElement, crop: PixelCrop) => {
-      if (throttleTimeoutRef.current !== null) {
-        return; // 如果已经有等待执行的更新，则跳过
-      }
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
       
-      throttleTimeoutRef.current = window.setTimeout(() => {
+      // 如果距离上次更新时间太短，则延迟执行
+      if (timeSinceLastUpdate < 200) {
+        if (throttleTimeoutRef.current) {
+          clearTimeout(throttleTimeoutRef.current);
+        }
+        
+        throttleTimeoutRef.current = setTimeout(() => {
+          updateCroppedPreview(image, crop);
+          lastUpdateTimeRef.current = Date.now();
+          throttleTimeoutRef.current = null;
+        }, 200 - timeSinceLastUpdate);
+      } else {
+        // 可以立即执行
         updateCroppedPreview(image, crop);
-        throttleTimeoutRef.current = null;
-      }, 150); // 150ms的节流间隔
+        lastUpdateTimeRef.current = now;
+      }
     },
     [updateCroppedPreview]
   );
 
-  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget;
-
-    // 初始化裁剪区域为图片中心的合适大小
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const image = e.currentTarget;
+    const { naturalWidth, naturalHeight, width, height } = image;
+  
+    // 只在没有现有裁剪区域时才初始化
     if (!crop) {
+      // 使用正确的缩放计算
+      const scaleX = width / naturalWidth;
+      const scaleY = height / naturalHeight;
+      
+      // 计算合适的裁剪尺寸（自然尺寸的60%）
+      const naturalCropSize = Math.min(naturalWidth, naturalHeight) * 0.6;
+      
+      // 转换为显示坐标
+      const displayCropSize = naturalCropSize * Math.min(scaleX, scaleY);
+      
       const initialCrop = {
-        unit: "px",
-        x: width / 4,
-        y: height / 4,
-        width: width / 2,
-        height: height / 2,
-      } as Crop;
-
+        unit: "px" as const,
+        x: (width - displayCropSize) / 2,
+        y: (height - displayCropSize) / 2,
+        width: displayCropSize,
+        height: displayCropSize,
+      };
+  
       setCrop(initialCrop);
       setCompletedCrop(initialCrop as PixelCrop);
-
+  
+      // 生成初始预览
       if (cropImageRef.current) {
         updateCroppedPreview(cropImageRef.current, initialCrop as PixelCrop);
       }
     }
-  };
+  }, [crop, setCrop, setCompletedCrop, updateCroppedPreview, cropImageRef]);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border">
@@ -76,22 +100,28 @@ export default function SelectionCropper({
           onChange={(c) => {
             setCrop(c);
             if (cropImageRef.current && c) {
-              // 使用节流函数更新预览，减少更新频率
+              // 使用优化的节流函数
               throttledUpdatePreview(cropImageRef.current, c as PixelCrop);
             }
           }}
           onComplete={(c) => {
             setCompletedCrop(c);
-            // 拖动完成时立即更新一次预览，确保最终状态准确
+            // 拖动完成时立即更新预览
             if (cropImageRef.current) {
+              // 清除可能存在的延迟更新
+              if (throttleTimeoutRef.current) {
+                clearTimeout(throttleTimeoutRef.current);
+                throttleTimeoutRef.current = null;
+              }
               updateCroppedPreview(cropImageRef.current, c);
+              lastUpdateTimeRef.current = Date.now();
             }
           }}
           aspect={undefined}
           className="max-w-full"
         >
           <img
-            ref={cropImageRef} // 使用外部传入的引用
+            ref={cropImageRef}
             src={originalImage}
             alt="原始图片"
             onLoad={onImageLoad}

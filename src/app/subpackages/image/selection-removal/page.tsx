@@ -42,6 +42,10 @@ export default function SelectionRemovalPage() {
   // 裁剪状态
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  // 添加裁剪预览状态
+  const [croppedPreview, setCroppedPreview] = useState<string>("");
+  // 添加橡皮擦处理后的图片状态
+  const [erasedImage, setErasedImage] = useState<string>("");
 
   // Refs
   const imageRef = useRef<HTMLImageElement>(null);
@@ -101,10 +105,12 @@ export default function SelectionRemovalPage() {
       return;
     }
 
-    // 直接将擦除后的图像设置为新的原始图像，而不是设置为处理后的图像
+    // 保存橡皮擦处理后的图片
+    setErasedImage(processedDataUrl);
+    // 同时设置为新的原始图像
     setOriginalImage(processedDataUrl);
     toggleEraserMode(); // 退出橡皮擦模式
-
+  
     toast({
       description: "橡皮擦处理完成！",
     });
@@ -151,6 +157,57 @@ export default function SelectionRemovalPage() {
       !processingState.isProcessing
     );
   }, [originalImage, completedCrop, processingState.isProcessing]);
+
+  // 生成裁剪预览 - 添加节流优化
+  const generateCroppedPreview = useCallback(
+    (image: HTMLImageElement, crop: PixelCrop) => {
+      if (!crop || !image) return;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) return;
+
+      // 计算缩放比例
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+
+      canvas.width = crop.width * scaleX;
+      canvas.height = crop.height * scaleY;
+
+      ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        crop.width * scaleX,
+        crop.height * scaleY,
+        0,
+        0,
+        crop.width * scaleX,
+        crop.height * scaleY,
+      );
+
+      const preview = canvas.toDataURL("image/png");
+      setCroppedPreview(preview);
+    },
+    [],
+  );
+
+  // 节流版本的预览生成函数
+  const throttledGeneratePreview = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout | null = null;
+      return (image: HTMLImageElement, crop: PixelCrop) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+          generateCroppedPreview(image, crop);
+        }, 100); // 100ms 节流
+      };
+    })(),
+    [generateCroppedPreview],
+  );
 
   return (
     <main className="container mx-auto p-6 max-w-7xl">
@@ -236,6 +293,8 @@ export default function SelectionRemovalPage() {
                     crop={crop}
                     setCrop={setCrop}
                     setCompletedCrop={setCompletedCrop}
+                    onCropChange={generateCroppedPreview}
+                    onCropChangeThrottled={throttledGeneratePreview}
                   />
                 ) : (
                   /* 橡皮擦Canvas */
@@ -275,10 +334,11 @@ export default function SelectionRemovalPage() {
             </div>
 
             {/* 图片对比区域 */}
-            {processedImage && (
+            {(processedImage || croppedPreview || erasedImage) && (
               <ResultComparison
                 originalImage={originalImage}
                 processedImage={processedImage}
+                croppedPreview={croppedPreview}
                 onUseAsNewImage={handleUseAsNewImage}
                 onDownload={handleDownload}
               />

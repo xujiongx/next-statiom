@@ -120,13 +120,32 @@ export class SelectionRemovalTool {
   }
 
   // 居中裁剪区域
-  public static centerCrop(mediaWidth: number, mediaHeight: number): PixelCrop {
-    const size = Math.min(mediaWidth, mediaHeight) * 0.8;
+  public static centerCrop(displayWidth: number, displayHeight: number, naturalWidth?: number, naturalHeight?: number): PixelCrop {
+    // 如果提供了自然尺寸，使用更精确的计算
+    if (naturalWidth && naturalHeight) {
+      const scaleX = displayWidth / naturalWidth;
+      const scaleY = displayHeight / naturalHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      const naturalSize = Math.min(naturalWidth, naturalHeight) * 0.6;
+      const displaySize = naturalSize * scale;
+      
+      return {
+        unit: 'px',
+        x: (displayWidth - displaySize) / 2,
+        y: (displayHeight - displaySize) / 2,
+        width: displaySize,
+        height: displaySize
+      };
+    }
+    
+    // 回退到原来的逻辑
+    const size = Math.min(displayWidth, displayHeight) * 0.6;
     
     return {
       unit: 'px',
-      x: (mediaWidth - size) / 2,
-      y: (mediaHeight - size) / 2,
+      x: (displayWidth - size) / 2,
+      y: (displayHeight - size) / 2,
       width: size,
       height: size
     };

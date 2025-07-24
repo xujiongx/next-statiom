@@ -1,40 +1,54 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PixelCrop } from "react-image-crop";
-
-
 
 export function useCropPreview() {
   const [croppedPreview, setCroppedPreview] = useState<string>("");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  // 更新裁剪预览
+  // 优化预览更新函数
   const updateCroppedPreview = useCallback((image: HTMLImageElement, crop: PixelCrop) => {
-    if (!crop || !image) return;
+    if (!crop || !image || crop.width <= 0 || crop.height <= 0) return;
     
-    const canvas = document.createElement('canvas');
+    // 复用 canvas 元素以减少 DOM 操作
+    let canvas = canvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvasRef.current = canvas;
+    }
+    
     const ctx = canvas.getContext('2d');
-    
     if (!ctx) return;
     
     // 计算缩放比例
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
     
-    canvas.width = crop.width * scaleX;
-    canvas.height = crop.height * scaleY;
+    const sourceX = crop.x * scaleX;
+    const sourceY = crop.y * scaleY;
+    const sourceWidth = crop.width * scaleX;
+    const sourceHeight = crop.height * scaleY;
     
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
+    
+    // 清除画布
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制裁剪区域
     ctx.drawImage(
       image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
       0,
       0,
-      crop.width * scaleX,
-      crop.height * scaleY
+      sourceWidth,
+      sourceHeight
     );
     
-    const preview = canvas.toDataURL('image/png');
+    // 使用较低质量以提高性能
+    const preview = canvas.toDataURL('image/jpeg', 0.8);
     setCroppedPreview(preview);
   }, []);
   

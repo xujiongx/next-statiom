@@ -9,6 +9,8 @@ interface ImageCropperProps {
   crop: Crop | undefined;
   setCrop: (crop: Crop) => void;
   setCompletedCrop: (crop: PixelCrop) => void;
+  onCropChange?: (image: HTMLImageElement, crop: PixelCrop) => void;
+  onCropChangeThrottled?: (image: HTMLImageElement, crop: PixelCrop) => void; // 新增节流版本
 }
 
 export function ImageCropper({
@@ -17,23 +19,44 @@ export function ImageCropper({
   crop,
   setCrop,
   setCompletedCrop,
+  onCropChange,
+  onCropChangeThrottled,
 }: ImageCropperProps) {
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const { width, height } = e.currentTarget;
-      // 初始化裁剪区域为图片中心的合适大小
-      const crop = SelectionRemovalTool.centerCrop(width, height);
+      const image = e.currentTarget;
+      const { width, height, naturalWidth, naturalHeight } = image;
+      
+      // 使用自然尺寸和显示尺寸来计算更准确的裁剪区域
+      const crop = SelectionRemovalTool.centerCrop(width, height, naturalWidth, naturalHeight);
       setCrop(crop);
       setCompletedCrop(crop);
+      
+      // 生成初始预览
+      if (onCropChange) {
+        onCropChange(image, crop);
+      }
     },
-    [setCrop, setCompletedCrop],
+    [setCrop, setCompletedCrop, onCropChange],
   );
 
   return (
     <ReactCrop
       crop={crop}
-      onChange={(c) => setCrop(c)}
-      onComplete={(c) => setCompletedCrop(c)}
+      onChange={(c) => {
+        setCrop(c);
+        // 拖动时使用节流版本，减少性能消耗
+        if (ref.current && c && onCropChangeThrottled) {
+          onCropChangeThrottled(ref.current, c as PixelCrop);
+        }
+      }}
+      onComplete={(c) => {
+        setCompletedCrop(c);
+        // 完成时立即更新预览
+        if (ref.current && onCropChange) {
+          onCropChange(ref.current, c);
+        }
+      }}
       aspect={undefined}
       className="max-w-full"
     >
