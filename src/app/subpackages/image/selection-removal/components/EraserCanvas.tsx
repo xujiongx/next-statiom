@@ -43,14 +43,14 @@ export function EraserCanvas({
           height: "auto",
           display: "block",
           objectFit: "contain",
-          maxHeight: "500px",
+          maxHeight: window.innerWidth < 768 ? "300px" : "500px",
         }}
       />
-      <div className="absolute top-2 right-2 flex gap-2">
-        <Button onClick={onComplete} size="sm" variant="default">
+      <div className="absolute top-2 right-2 flex flex-col sm:flex-row gap-2">
+        <Button onClick={onComplete} size="sm" variant="default" className="text-xs sm:text-sm">
           完成
         </Button>
-        <Button onClick={onCancel} size="sm" variant="outline">
+        <Button onClick={onCancel} size="sm" variant="outline" className="text-xs sm:text-sm">
           取消
         </Button>
       </div>

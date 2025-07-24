@@ -210,18 +210,18 @@ export default function SelectionRemovalPage() {
   );
 
   return (
-    <main className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold mb-1 flex items-center gap-2">
-          <Scissors className="h-6 w-6" />
+    <main className="container mx-auto p-4 sm:p-6 max-w-7xl">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-lg sm:text-xl font-bold mb-1 flex items-center gap-2">
+          <Scissors className="h-5 w-5 sm:h-6 sm:w-6" />
           框选抠图
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           框选需要保留的区域，一键抠图生成透明背景图片
         </p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {/* 上传区域 */}
         {!originalImage ? (
           <ImageUploader
@@ -231,9 +231,9 @@ export default function SelectionRemovalPage() {
             isProcessing={processingState.isProcessing}
           />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* 裁剪区域 */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border">
               <div className="mb-4">
                 <h3 className="font-medium mb-2">调整框选区域</h3>
                 <p className="text-sm text-gray-500">
@@ -241,13 +241,13 @@ export default function SelectionRemovalPage() {
                 </p>
               </div>
 
-              {/* 添加橡皮擦模式切换按钮 */}
-              <div className="flex items-center justify-between mb-4">
+              {/* 橡皮擦模式切换按钮 - 移动端优化 */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <Button
                   onClick={toggleEraserMode}
                   variant={isEraserMode ? "default" : "outline"}
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -267,7 +267,7 @@ export default function SelectionRemovalPage() {
                 </Button>
 
                 {isEraserMode && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-center sm:justify-end">
                     <span className="text-sm text-gray-500">橡皮擦大小:</span>
                     <input
                       type="range"
@@ -275,9 +275,9 @@ export default function SelectionRemovalPage() {
                       max="50"
                       value={eraserSize}
                       onChange={(e) => setEraserSize(Number(e.target.value))}
-                      className="w-24"
+                      className="w-20 sm:w-24"
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 min-w-[30px]">
                       {eraserSize}px
                     </span>
                   </div>
@@ -315,7 +315,7 @@ export default function SelectionRemovalPage() {
               </div>
 
               {completedCrop && !isEraserMode && (
-                <div className="mt-4 text-sm text-gray-500">
+                <div className="mt-4 text-xs sm:text-sm text-gray-500 break-all">
                   选区: X: {Math.round(completedCrop.x)}, Y:{" "}
                   {Math.round(completedCrop.y)}, 宽:{" "}
                   {Math.round(completedCrop.width)}, 高:{" "}

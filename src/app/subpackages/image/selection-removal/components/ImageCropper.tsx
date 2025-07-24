@@ -58,14 +58,20 @@ export function ImageCropper({
         }
       }}
       aspect={undefined}
-      className="max-w-full"
+      className="max-w-full touch-manipulation"
+      minWidth={30}
+      minHeight={30}
     >
       <img
         ref={ref}
         src={imageUrl}
         alt="原始图片"
         onLoad={onImageLoad}
-        style={{ maxWidth: "100%", maxHeight: "500px" }}
+        style={{ 
+          maxWidth: "100%", 
+          maxHeight: window.innerWidth < 768 ? "300px" : "500px",
+          touchAction: "none"
+        }}
         crossOrigin="anonymous"
       />
     </ReactCrop>

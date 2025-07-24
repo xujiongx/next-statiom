@@ -10,7 +10,7 @@ interface ImageUploaderProps {
 export function ImageUploader({ onDragOver, onDrop, onFileUpload, isProcessing }: ImageUploaderProps) {
   return (
     <div
-      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
+      className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center hover:border-gray-400 transition-colors"
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -26,11 +26,11 @@ export function ImageUploader({ onDragOver, onDrop, onFileUpload, isProcessing }
         htmlFor="file-upload"
         className={`cursor-pointer ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
       >
-        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-lg font-medium text-gray-900 mb-2">
+        <Upload className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+        <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
           点击上传或拖拽图片到此处
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs sm:text-sm text-gray-500">
           支持 JPG、PNG、WEBP 格式，最大 10MB
         </p>
       </label>

@@ -86,7 +86,7 @@ export default function SelectionCropper({
   }, [crop, setCrop, setCompletedCrop, updateCroppedPreview, cropImageRef]);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border">
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border">
       <div className="mb-4">
         <h3 className="font-medium mb-2">调整框选区域</h3>
         <p className="text-sm text-gray-500">
@@ -100,15 +100,12 @@ export default function SelectionCropper({
           onChange={(c) => {
             setCrop(c);
             if (cropImageRef.current && c) {
-              // 使用优化的节流函数
               throttledUpdatePreview(cropImageRef.current, c as PixelCrop);
             }
           }}
           onComplete={(c) => {
             setCompletedCrop(c);
-            // 拖动完成时立即更新预览
             if (cropImageRef.current) {
-              // 清除可能存在的延迟更新
               if (throttleTimeoutRef.current) {
                 clearTimeout(throttleTimeoutRef.current);
                 throttleTimeoutRef.current = null;
@@ -118,21 +115,27 @@ export default function SelectionCropper({
             }
           }}
           aspect={undefined}
-          className="max-w-full"
+          className="max-w-full touch-manipulation"
+          minWidth={30}
+          minHeight={30}
         >
           <img
             ref={cropImageRef}
             src={originalImage}
             alt="原始图片"
             onLoad={onImageLoad}
-            style={{ maxWidth: "100%", maxHeight: "500px" }}
+            style={{ 
+              maxWidth: "100%", 
+              maxHeight: window.innerWidth < 768 ? "300px" : "500px",
+              touchAction: "none"
+            }}
             crossOrigin="anonymous"
           />
         </ReactCrop>
       </div>
 
       {completedCrop && (
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-4 text-xs sm:text-sm text-gray-500 break-all">
           选区: X: {Math.round(completedCrop.x)}, Y:{" "}
           {Math.round(completedCrop.y)}, 宽: {Math.round(completedCrop.width)},
           高: {Math.round(completedCrop.height)}

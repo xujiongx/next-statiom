@@ -71,13 +71,13 @@ export default function BackgroundRemovalPage() {
   });
 
   return (
-    <main className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold mb-1 flex items-center gap-2">
-          <Scissors className="h-6 w-6" />
+    <main className="container mx-auto p-4 sm:p-6 max-w-7xl">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-lg sm:text-xl font-bold mb-1 flex items-center gap-2">
+          <Scissors className="h-5 w-5 sm:h-6 sm:w-6" />
           AI 抠图工具
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {selectionMode
             ? "框选需要保留的区域，一键抠图生成透明背景图片"
             : "智能识别前景，一键去除背景，生成透明图片，无需专业技能"}
@@ -91,7 +91,7 @@ export default function BackgroundRemovalPage() {
 
       <ModelStatus selectionMode={selectionMode} modelStatus={modelStatus} />
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {!originalImage ? (
           <ImageUploader
             handleDragOver={handleDragOver}
@@ -100,7 +100,7 @@ export default function BackgroundRemovalPage() {
             processingState={processingState}
           />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {selectionMode && (
               <SelectionCropper
                 cropImageRef={cropImageRef}
@@ -138,7 +138,7 @@ export default function BackgroundRemovalPage() {
               croppedPreview={croppedPreview}
               handleDownload={handleDownload}
               handleReupload={handleReupload}
-              handleUseAsNewImage={handleUseAsNewImage} // 传递新函数给组件
+              handleUseAsNewImage={handleUseAsNewImage}
             />
 
             {/* 添加隐藏的图像元素，用于处理 */}
