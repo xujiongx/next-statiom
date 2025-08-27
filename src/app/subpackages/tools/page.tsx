@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Palette } from "lucide-react";
+import { MessageSquare, Palette, Mic } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 
 export default function ToolsPage() {
@@ -18,6 +18,13 @@ export default function ToolsPage() {
       icon: <Palette className="h-6 w-6" />,
       description: "探索各种CSS特效和动画效果，包括粒子、渐变、动画等",
       path: "/subpackages/tools/effects",
+    },
+    {
+      id: "speech",
+      title: "语音处理工具",
+      icon: <Mic className="h-6 w-6" />,
+      description: "语音转文本和文本转语音功能，基于Web Speech API实现",
+      path: "/subpackages/tools/speech",
     },
   ];
 
