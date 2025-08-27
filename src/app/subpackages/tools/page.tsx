@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Palette, Mic } from "lucide-react";
+import { MessageSquare, Palette, Mic, Bot } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 
 export default function ToolsPage() {
@@ -25,6 +25,13 @@ export default function ToolsPage() {
       icon: <Mic className="h-6 w-6" />,
       description: "语音转文本和文本转语音功能，基于Web Speech API实现",
       path: "/subpackages/tools/speech",
+    },
+    {
+      id: "digital-human",
+      title: "3D数字人模型",
+      icon: <Bot className="h-6 w-6" />,
+      description: "加载和展示3D数字人模型，支持动画控制和交互操作",
+      path: "/subpackages/tools/digital-human",
     },
   ];
 
