@@ -67,7 +67,7 @@ export function DigitalHuman({ className }: DigitalHumanProps) {
       
       // 创建场景
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xf0f0f0);
+      scene.background = new THREE.Color(0xf8f8f8);  // 更亮的背景颜色
       sceneRef.current = scene;
 
       // 创建相机
@@ -86,7 +86,7 @@ export function DigitalHuman({ className }: DigitalHumanProps) {
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.setClearColor(0xf0f0f0, 1);
+      renderer.setClearColor(0xf8f8f8, 1);  // 与背景颜色保持一致
       rendererRef.current = renderer;
 
       // 创建轨道控制
@@ -100,10 +100,10 @@ export function DigitalHuman({ className }: DigitalHumanProps) {
       controlsRef.current = controls;
 
       // 添加更强的光照系统
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.8);  // 增强环境光
+      const ambientLight = new THREE.AmbientLight(0x606060, 1.2);  // 大幅增强环境光亮度和颜色
       scene.add(ambientLight);
 
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);  // 增强主光源
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);  // 大幅增强主光源
       directionalLight.position.set(10, 10, 5);
       directionalLight.castShadow = true;
       directionalLight.shadow.mapSize.width = 2048;
@@ -116,22 +116,41 @@ export function DigitalHuman({ className }: DigitalHumanProps) {
       directionalLight.shadow.camera.bottom = -10;
       scene.add(directionalLight);
       
-      // 添加多个点光源提供更好的照明
-      const pointLight1 = new THREE.PointLight(0xffffff, 0.6, 100);
+      // 添加多个强光源提供全方位照明
+      const pointLight1 = new THREE.PointLight(0xffffff, 1.0, 100);  // 增强第一个点光源
       pointLight1.position.set(5, 5, 5);
       scene.add(pointLight1);
       
-      const pointLight2 = new THREE.PointLight(0xffffff, 0.4, 100);
+      const pointLight2 = new THREE.PointLight(0xffffff, 0.8, 100);  // 增强第二个点光源
       pointLight2.position.set(-5, 3, 3);
       scene.add(pointLight2);
       
-      // 添加半球光增强整体亮度
-      const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.3);
+      // 添加背面光源减少阴影
+      const pointLight3 = new THREE.PointLight(0xffffff, 0.6, 100);
+      pointLight3.position.set(0, 5, -5);
+      scene.add(pointLight3);
+      
+      // 添加侧面光源
+      const pointLight4 = new THREE.PointLight(0xffffff, 0.5, 100);
+      pointLight4.position.set(-5, 3, -3);
+      scene.add(pointLight4);
+      
+      // 增强半球光整体亮度
+      const hemisphereLight = new THREE.HemisphereLight(0xffffdd, 0x202040, 0.6);  // 增强半球光强度
       scene.add(hemisphereLight);
+      
+      // 添加补光灯减少深色区域
+      const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      fillLight.position.set(-10, 5, -5);
+      scene.add(fillLight);
 
-      // 添加地面
+      // 添加地面，使用更亮的材质
       const groundGeometry = new THREE.PlaneGeometry(20, 20);
-      const groundMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+      const groundMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xf8f8f8,  // 更亮的颜色
+        shininess: 30,    // 添加一些光泽
+        specular: 0x404040 // 添加高光反射
+      });
       const ground = new THREE.Mesh(groundGeometry, groundMaterial);
       ground.rotation.x = -Math.PI / 2;
       ground.receiveShadow = true;
@@ -182,17 +201,6 @@ export function DigitalHuman({ className }: DigitalHumanProps) {
 
     animationIdRef.current = requestAnimationFrame(animate);
   }, []);
-
-  // 网络连接测试
-  const testConnection = async (url: string): Promise<boolean> => {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      return response.ok;
-    } catch (error) {
-      console.error('网络测试失败:', error);
-      return false;
-    }
-  };
 
   // 加载3D模型
   const loadModel = useCallback(async (modelName: string) => {
