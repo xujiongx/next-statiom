@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Palette, Mic, Bot } from "lucide-react";
+import { MessageSquare, Palette, Mic, Bot, Volume2 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 
 export default function ToolsPage() {
@@ -32,6 +32,13 @@ export default function ToolsPage() {
       icon: <Bot className="h-6 w-6" />,
       description: "加载和展示3D数字人模型，支持动画控制和交互操作",
       path: "/subpackages/tools/digital-human",
+    },
+    {
+      id: "alibaba-tts",
+      title: "阿里百炼TTS",
+      icon: <Volume2 className="h-6 w-6" />,
+      description: "使用阿里百炼API进行文本转语音，支持多种语音角色和参数调试",
+      path: "/subpackages/tools/alibaba-tts",
     },
   ];
 
