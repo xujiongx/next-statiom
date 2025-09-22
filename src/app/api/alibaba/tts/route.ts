@@ -221,7 +221,10 @@ export async function POST(request: NextRequest) {
 
     console.log('音频数据处理完成，大小:', audioBuffer.length, 'bytes');
 
-    return new NextResponse(audioBuffer, {
+    // 使用 Uint8Array 包装 Buffer 以确保兼容性
+    const uint8Array = new Uint8Array(audioBuffer);
+
+    return new NextResponse(uint8Array, {
       status: 200,
       headers: {
         'Content-Type': 'audio/wav',
