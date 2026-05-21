@@ -157,7 +157,7 @@ export default function PostList({
           {tag ? `没有找到与 #${tag} 相关的帖子` : '暂无帖子'}
         </p>
         <Button className='mt-4'>
-          <Link href='/community/new'>发布第一篇帖子</Link>
+          <Link href='/subpackages/community/new'>发布第一篇帖子</Link>
         </Button>
       </div>
     );

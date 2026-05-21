@@ -17,18 +17,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 
 ## 数据库
-edgedb
+PostgreSQL + Prisma
 
 ### 安装与初始化
-1. 安装 EdgeDB CLI:
+1. 在 `.env.local` 中配置 `POSTGRES_URL`（Prisma Postgres / Neon / Supabase 等）
+2. 同步 schema 到数据库:
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
+pnpm db:push
 ```
-
-
-edgedb cloud login
-edgedb migration create -I vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree
-edgedb migrate -I vercel-dNh6muuUJVKh5BMUia7wywwj/edgedb-yellow-tree
+3. 生成 Prisma Client:
+```bash
+pnpm db:generate
+```
 
 
 域名

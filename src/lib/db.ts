@@ -1,23 +1,9 @@
-import { createClient } from "edgedb";
+import { PrismaClient } from '@prisma/client';
 
-if (!process.env.EDGEDB_INSTANCE || !process.env.EDGEDB_SECRET_KEY) {
-  throw new Error('EdgeDB 配置缺失');
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
-
-export const client = createClient({
-  dsn: process.env.EDGEDB_INSTANCE,
-  secretKey: process.env.EDGEDB_SECRET_KEY,
-  tlsSecurity: "strict",
-  timeout: 100000,
-});
-
-// 测试连接
-client.ensureConnected().then(() => {
-  console.log('EdgeDB 连接成功');
-}).catch((err) => {
-  console.error('EdgeDB 连接失败:', err);
-  // 添加更详细的错误信息
-  if (err.message) {
-    console.error('错误详情:', err.message);
-  }
-});

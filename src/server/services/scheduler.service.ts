@@ -1,6 +1,7 @@
-import { client } from "@/lib/db";
-import { ApiError } from "@/lib/error";
-import * as cron from "node-cron";
+import { prisma } from '@/lib/db';
+import { ApiError } from '@/lib/error';
+import * as cron from 'node-cron';
+import { PixabayService } from './pixabay.service';
 
 interface ScheduledTask {
   id: string;
@@ -8,8 +9,8 @@ interface ScheduledTask {
   cronExpression: string;
   handler: string;
   isActive: boolean;
-  lastRun?: Date;
-  nextRun?: Date;
+  lastRun?: Date | null;
+  nextRun?: Date | null;
   createdAt: Date;
 }
 
@@ -24,211 +25,148 @@ interface CreateTaskParams {
 export class SchedulerService {
   private tasks: Map<string, cron.ScheduledTask> = new Map();
 
-  // 创建定时任务
   async createTask(params: CreateTaskParams): Promise<ScheduledTask> {
     const { name, cronExpression, handler, isActive = true, userId } = params;
 
-    // 验证 cron 表达式
     if (!cron.validate(cronExpression)) {
-      throw new ApiError("无效的 cron 表达式", 400);
+      throw new ApiError('无效的 cron 表达式', 400);
     }
 
-    const task = await client.query<ScheduledTask>(
-      `
-    select (
-      insert ScheduledTask {
-        name := <str>$name,
-        cronExpression := <str>$cronExpression,
-        handler := <str>$handler,
-        isActive := <bool>$isActive,
-        user := (select User filter .id = <uuid>$userId),
-        createdAt := datetime_current()
-      }
-    ) {
-      id,
-      name,
-      cronExpression,
-      handler,
-      isActive,
-      lastRun,
-      nextRun,
-      createdAt,
-      user: { id, username, nickname }
-    }
-    `,
-      { name, cronExpression, handler, isActive, userId },
-    );
-
-    if (isActive) {
-      this.scheduleTask(task[0]);
-    }
-
-    return task[0];
-  }
-
-  // 获取所有任务
-  async getAllTasks(userId?: string): Promise<ScheduledTask[]> {
-    const query = userId 
-      ? `
-        select ScheduledTask {
-          id,
-          name,
-          cronExpression,
-          handler,
-          isActive,
-          lastRun,
-          nextRun,
-          createdAt,
-          user: { id, username, nickname }
-        } filter .user.id = <uuid>$userId
-        order by .createdAt desc
-      `
-      : `
-        select ScheduledTask {
-          id,
-          name,
-          cronExpression,
-          handler,
-          isActive,
-          lastRun,
-          nextRun,
-          createdAt,
-          user: { id, username, nickname }
-        }
-        order by .createdAt desc
-      `;
-    
-    const params = userId ? { userId } : {};
-    return await client.query<ScheduledTask>(query, params);
-  }
-
-  // 启动任务
-  async startTask(taskId: string): Promise<void> {
-    const tasks = await client.query<ScheduledTask>(
-      `
-        select (
-          update ScheduledTask
-          filter .id = <uuid>$taskId
-          set {
-            isActive := true
-          }
-        ) {
-          id,
-          name,
-          cronExpression,
-          handler,
-          isActive,
-          lastRun,
-          nextRun,
-          createdAt
-        }
-      `,
-      { taskId },
-    );
-
-    if (tasks.length > 0) {
-      this.scheduleTask(tasks[0]);
-    }
-  }
-
-  // 停止任务
-  async stopTask(taskId: string): Promise<void> {
-    await client.query(
-      `
-      update ScheduledTask
-      filter .id = <uuid>$taskId
-      set {
-        isActive := false
-      }
-      `,
-      { taskId },
-    );
-
-    this.unscheduleTask(taskId);
-  }
-
-  // 删除任务
-  async deleteTask(taskId: string): Promise<void> {
-    this.unscheduleTask(taskId);
-
-    await client.query(
-      `
-      delete ScheduledTask
-      filter .id = <uuid>$taskId
-      `,
-      { taskId },
-    );
-  }
-
-  // 手动执行任务
-  async executeTask(taskId: string): Promise<void> {
-    const tasks = await client.query<ScheduledTask>(
-      `
-      select ScheduledTask {
-        id,
-        name,
-        handler
-      }
-      filter .id = <uuid>$taskId
-      limit 1
-      `,
-      { taskId },
-    );
-
-    if (tasks.length === 0) {
-      throw new ApiError("任务不存在", 404);
-    }
-
-    await this.runTaskHandler(tasks[0]);
-  }
-
-  // 初始化所有活跃任务
-  async initializeTasks(): Promise<void> {
-    const activeTasks = await client.query<ScheduledTask>(
-      `
-      select ScheduledTask {
-        id,
+    const task = await prisma.scheduledTask.create({
+      data: {
         name,
         cronExpression,
         handler,
         isActive,
-        lastRun,
-        nextRun,
-        createdAt
-      }
-      filter .isActive = true
-      `,
-    );
+        userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        cronExpression: true,
+        handler: true,
+        isActive: true,
+        lastRun: true,
+        nextRun: true,
+        createdAt: true,
+      },
+    });
+
+    if (isActive) {
+      this.scheduleTask(task);
+    }
+
+    return task;
+  }
+
+  async getAllTasks(userId?: string): Promise<ScheduledTask[]> {
+    return prisma.scheduledTask.findMany({
+      where: userId ? { userId } : undefined,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        cronExpression: true,
+        handler: true,
+        isActive: true,
+        lastRun: true,
+        nextRun: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async startTask(taskId: string): Promise<void> {
+    const task = await prisma.scheduledTask.update({
+      where: { id: taskId },
+      data: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        cronExpression: true,
+        handler: true,
+        isActive: true,
+        lastRun: true,
+        nextRun: true,
+        createdAt: true,
+      },
+    });
+
+    this.scheduleTask(task);
+  }
+
+  async stopTask(taskId: string): Promise<void> {
+    await prisma.scheduledTask.update({
+      where: { id: taskId },
+      data: { isActive: false },
+    });
+
+    this.unscheduleTask(taskId);
+  }
+
+  async deleteTask(taskId: string): Promise<void> {
+    this.unscheduleTask(taskId);
+
+    await prisma.scheduledTask.delete({
+      where: { id: taskId },
+    });
+  }
+
+  async executeTask(taskId: string): Promise<void> {
+    const task = await prisma.scheduledTask.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        name: true,
+        handler: true,
+      },
+    });
+
+    if (!task) {
+      throw new ApiError('任务不存在', 404);
+    }
+
+    await this.runTaskHandler(task);
+  }
+
+  async initializeTasks(): Promise<void> {
+    const activeTasks = await prisma.scheduledTask.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        cronExpression: true,
+        handler: true,
+        isActive: true,
+        lastRun: true,
+        nextRun: true,
+        createdAt: true,
+      },
+    });
 
     for (const task of activeTasks) {
       this.scheduleTask(task);
     }
   }
 
-  // 调度任务
   private scheduleTask(task: ScheduledTask): void {
-    // 如果任务已经存在，先取消
     this.unscheduleTask(task.id);
 
-    // 使用 node-cron 创建定时任务
     const scheduledTask = cron.schedule(
       task.cronExpression,
       async () => {
         await this.runTaskHandler(task);
       },
       {
-        timezone: "Asia/Shanghai", // 设置时区
+        timezone: 'Asia/Shanghai',
       },
     );
 
-    // 启动任务
     scheduledTask.start();
-
     this.tasks.set(task.id, scheduledTask);
     console.log(`任务已调度: ${task.name} (${task.cronExpression})`);
   }
 
-  // 取消调度
   private unscheduleTask(taskId: string): void {
     const scheduledTask = this.tasks.get(taskId);
     if (scheduledTask) {
@@ -239,24 +177,15 @@ export class SchedulerService {
     }
   }
 
-  // 执行任务处理器
-  private async runTaskHandler(task: ScheduledTask): Promise<void> {
+  private async runTaskHandler(task: Pick<ScheduledTask, 'id' | 'name' | 'handler'>): Promise<void> {
     try {
       console.log(`开始执行任务: ${task.name}`);
 
-      // 更新最后运行时间
-      await client.query(
-        `
-        update ScheduledTask
-        filter .id = <uuid>$taskId
-        set {
-          lastRun := datetime_current()
-        }
-        `,
-        { taskId: task.id },
-      );
+      await prisma.scheduledTask.update({
+        where: { id: task.id },
+        data: { lastRun: new Date() },
+      });
 
-      // 根据 handler 执行相应的任务
       await this.executeHandler(task.handler);
 
       console.log(`任务执行完成: ${task.name}`);
@@ -265,25 +194,24 @@ export class SchedulerService {
     }
   }
 
-  // 执行具体的处理器
   private async executeHandler(handler: string): Promise<void> {
     switch (handler) {
-      case "cleanupLogs":
+      case 'cleanupLogs':
         await this.cleanupLogs();
         break;
-      case "sendNotifications":
+      case 'sendNotifications':
         await this.sendNotifications();
         break;
-      case "backupData":
+      case 'backupData':
         await this.backupData();
         break;
-      case "healthCheck":
+      case 'healthCheck':
         await this.healthCheck();
         break;
-      case "generateReports":
+      case 'generateReports':
         await this.generateReports();
         break;
-      case "syncData":
+      case 'syncData':
         await this.syncData();
         break;
       default:
@@ -291,47 +219,35 @@ export class SchedulerService {
     }
   }
 
-  // 示例任务处理器
   private async cleanupLogs(): Promise<void> {
-    console.log("执行日志清理任务...");
-    // 实现日志清理逻辑
-    // 例如：删除30天前的日志文件
+    console.log('执行日志清理任务...');
   }
 
   private async sendNotifications(): Promise<void> {
-    console.log("发送通知任务...");
-    // 实现通知发送逻辑
-    // 例如：发送邮件、短信或推送通知
+    console.log('发送通知任务...');
   }
 
   private async backupData(): Promise<void> {
-    console.log("执行数据备份任务...");
-    // 实现数据备份逻辑
-    // 例如：备份数据库到云存储
+    console.log('执行数据备份任务...');
   }
 
   private async healthCheck(): Promise<void> {
-    console.log("执行健康检查任务...");
-    // 实现健康检查逻辑
-    // 例如：检查服务状态、数据库连接等
+    console.log('执行健康检查任务...');
   }
 
   private async generateReports(): Promise<void> {
-    console.log("生成报告任务...");
-    // 实现报告生成逻辑
-    // 例如：生成日报、周报、月报
+    console.log('生成报告任务...');
   }
 
   private async syncData(): Promise<void> {
     try {
       const pixabayService = new PixabayService();
-      await pixabayService.syncData(3); // 同步3张图片
+      await pixabayService.syncData(3);
     } catch (error) {
       console.error('同步数据任务失败:', error);
     }
   }
 
-  // 获取任务状态信息
   getTaskStatus(taskId: string): { isRunning: boolean; nextExecution?: Date } {
     const scheduledTask = this.tasks.get(taskId);
     if (!scheduledTask) {
@@ -339,34 +255,28 @@ export class SchedulerService {
     }
 
     return {
-      isRunning: scheduledTask.getStatus() === "scheduled",
-      // node-cron 不直接提供下次执行时间，可以使用其他库如 cron-parser 来计算
+      isRunning: scheduledTask.getStatus() === 'scheduled',
     };
   }
 
-  // 获取所有运行中的任务
   getRunningTasks(): string[] {
     const runningTasks: string[] = [];
     this.tasks.forEach((task, taskId) => {
-      if (task.getStatus() === "scheduled") {
+      if (task.getStatus() === 'scheduled') {
         runningTasks.push(taskId);
       }
     });
     return runningTasks;
   }
 
-  // 停止所有任务
   stopAllTasks(): void {
     this.tasks.forEach((task) => {
       task.stop();
       task.destroy();
     });
     this.tasks.clear();
-    console.log("所有任务已停止");
+    console.log('所有任务已停止');
   }
 }
 
 export const schedulerService = new SchedulerService();
-
-// 在文件顶部添加导入
-import { PixabayService } from './pixabay.service';

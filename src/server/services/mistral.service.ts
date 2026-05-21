@@ -1,10 +1,8 @@
-import { Mistral, SDKOptions } from '@mistralai/mistralai';
 import { config } from '@/config';
 import { Message } from '@/types/chat';
 import { ApiError } from '@/lib/error';
-import { client } from '@/lib/db';
-
-const mistralClient = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
+import { prisma } from '@/lib/db';
+import { mistralClient } from '@/lib/mistral';
 
 interface DbMessage {
   id: string;
@@ -16,9 +14,8 @@ interface DbMessage {
 interface DbConversation {
   id: string;
   title: string;
-  messages: DbMessage[];
+  session_id: string;
   updated_at: string;
-  user_id: string; // 添加用户ID字段
 }
 
 export class MistralService {
@@ -29,20 +26,20 @@ export class MistralService {
   }) {
     const { content, sessionId, userId } = params;
 
-    // 获取对话历史
-    const messages = await client.query<DbMessage[]>(
-      `
-      select Message {
-        content,
-        role,
-        timestamp
-      }
-      filter .conversation.session_id = <str>$sessionId
-        and .conversation.user.id = <uuid>$userId
-      order by .timestamp
-    `,
-      { sessionId, userId }
-    );
+    const messages = await prisma.message.findMany({
+      where: {
+        conversation: {
+          sessionId,
+          userId,
+        },
+      },
+      orderBy: { timestamp: 'asc' },
+      select: {
+        content: true,
+        role: true,
+        timestamp: true,
+      },
+    });
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -51,8 +48,6 @@ export class MistralService {
       timestamp: new Date().toISOString(),
     };
 
-    // Save and continue with the rest of the code...
-    // 保存用户消息
     await this.saveMessage(sessionId, userMessage, userId);
 
     try {
@@ -69,10 +64,7 @@ export class MistralService {
         timestamp: new Date().toISOString(),
       };
 
-      // 保存助手回复
       await this.saveMessage(sessionId, assistantMessage, userId);
-
-      // 更新对话时间
       await this.updateConversationTime(sessionId);
 
       return assistantMessage.content;
@@ -83,31 +75,26 @@ export class MistralService {
   }
 
   async getConversationMessages(sessionId: string) {
-    const messages = await client.query<DbMessage[]>(
-      `
-      with conversation := (
-        select Conversation { id }
-        filter .session_id = <str>$sessionId
-      )
-      select Message {
-        id,
-        content,
-        role,
-        timestamp
-      }
-      filter .conversation in conversation
-      order by .timestamp
-    `,
-      { sessionId }
-    );
-
-    console.log('查询参数:', { sessionId });
-    console.log('查询结果:', messages);
+    const messages = await prisma.message.findMany({
+      where: {
+        conversation: { sessionId },
+      },
+      orderBy: { timestamp: 'asc' },
+      select: {
+        id: true,
+        content: true,
+        role: true,
+        timestamp: true,
+      },
+    });
 
     return {
       code: 0,
       data: {
-        messages,
+        messages: messages.map((message) => ({
+          ...message,
+          timestamp: message.timestamp.toISOString(),
+        })),
         total: messages.length,
       },
     };
@@ -116,52 +103,38 @@ export class MistralService {
   private async saveMessage(
     sessionId: string,
     message: Message,
-    userId: string
+    userId: string,
   ) {
-    const result = await client.query(
-      `
-      with
-        conversation := (
-          select Conversation 
-          filter .session_id = <str>$sessionId
-        ),
-        new_conversation := (
-          insert Conversation {
-            title := <str>$content,
-            session_id := <str>$sessionId,
-            user := (
-              select User 
-              filter .id = <uuid>$userId
-            )
-          }
-          unless conflict on .session_id
-        )
-      select (
-        insert Message {
-          content := <str>$content,
-          role := <str>$role,
-          timestamp := <datetime>$timestamp,
-          conversation := assert_exists(conversation ?? new_conversation)
-        }
-      ) {
-        id,
-        content,
-        role,
-        timestamp,
-        conversation: {
-          id,
-          session_id
-        }
-      }
-    `,
-      {
+    const conversation = await prisma.conversation.upsert({
+      where: { sessionId },
+      create: {
+        title: message.content.slice(0, 50),
+        sessionId,
+        userId,
+      },
+      update: {},
+    });
+
+    const result = await prisma.message.create({
+      data: {
         content: message.content,
         role: message.role,
         timestamp: new Date(message.timestamp),
-        sessionId,
-        userId,
-      }
-    );
+        conversationId: conversation.id,
+      },
+      select: {
+        id: true,
+        content: true,
+        role: true,
+        timestamp: true,
+        conversation: {
+          select: {
+            id: true,
+            sessionId: true,
+          },
+        },
+      },
+    });
 
     console.log('保存消息结果:', result);
 
@@ -171,38 +144,34 @@ export class MistralService {
   }
 
   private async updateConversationTime(sessionId: string) {
-    await client.query(
-      `
-      update Conversation
-      filter .session_id = <str>$sessionId
-      set {
-        updated_at := datetime_current()
-      }
-    `,
-      { sessionId }
-    );
+    await prisma.conversation.update({
+      where: { sessionId },
+      data: { updatedAt: new Date() },
+    });
   }
 
   async getConversationList(userId: string) {
     try {
-      const conversations = await client.query<DbConversation>(
-        `
-        select Conversation {
-          id,
-          session_id,
-          title,
-          updated_at
-        }
-        filter .user.id = <uuid>$userId
-        order by .updated_at desc
-      `,
-        { userId }
-      );
+      const conversations = await prisma.conversation.findMany({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          sessionId: true,
+          title: true,
+          updatedAt: true,
+        },
+      });
 
       return {
         code: 0,
         data: {
-          conversations,
+          conversations: conversations.map((conversation) => ({
+            id: conversation.id,
+            session_id: conversation.sessionId,
+            title: conversation.title,
+            updated_at: conversation.updatedAt.toISOString(),
+          })) as DbConversation[],
           total: conversations.length,
         },
       };
@@ -213,23 +182,9 @@ export class MistralService {
 
   async deleteConversation(sessionId: string) {
     try {
-      // 先删除关联的消息
-      await client.query(
-        `
-        delete Message
-        filter .conversation.session_id = <str>$sessionId
-      `,
-        { sessionId }
-      );
-
-      // 再删除对话
-      await client.query(
-        `
-        delete Conversation
-        filter .session_id = <str>$sessionId
-      `,
-        { sessionId }
-      );
+      await prisma.conversation.delete({
+        where: { sessionId },
+      });
 
       return {
         code: 0,
@@ -243,24 +198,27 @@ export class MistralService {
 
   async getLatestConversation(userId: string) {
     try {
-      const conversations = await client.query<DbConversation>(
-        `
-        select Conversation {
-          id,
-          session_id,
-          title,
-          updated_at
-        }
-        filter .user.id = <uuid>$userId
-        order by .updated_at desc
-        limit 1
-        `,
-        { userId }
-      );
+      const conversation = await prisma.conversation.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          sessionId: true,
+          title: true,
+          updatedAt: true,
+        },
+      });
 
       return {
         code: 0,
-        data: conversations[0] || null,
+        data: conversation
+          ? {
+              id: conversation.id,
+              session_id: conversation.sessionId,
+              title: conversation.title,
+              updated_at: conversation.updatedAt.toISOString(),
+            }
+          : null,
       };
     } catch (error) {
       console.error('获取最近对话错误:', error);

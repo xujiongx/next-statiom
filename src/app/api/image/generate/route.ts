@@ -3,10 +3,8 @@ import { withErrorHandler } from '@/lib/api';
 import fetch, { RequestInit, Response } from 'node-fetch';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { Agent } from 'http';
-import { Mistral, SDKOptions } from '@mistralai/mistralai';
 import { config } from '@/config';
-
-const mistralClient = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
+import { mistralClient } from '@/lib/mistral';
 
 // 定义请求选项的接口
 interface FetchOptions extends Omit<RequestInit, 'agent'> {

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { withErrorHandler } from '@/lib/api';
 import { communityService } from '@/server/services/community.service';
 import { getServerSession } from '@/lib/auth';
-import { client } from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { ApiError } from '@/lib/error';
 
 interface RouteParams {
@@ -35,7 +35,6 @@ export async function GET(request: NextRequest, context: RouteParams) {
   });
 }
 
-// 更新帖子
 export async function PUT(request: NextRequest, context: RouteParams) {
   return withErrorHandler(async () => {
     const params = await context.params;
@@ -50,7 +49,6 @@ export async function PUT(request: NextRequest, context: RouteParams) {
       );
     }
 
-    // 获取当前登录用户
     const session = await getServerSession();
     if (!session?.user) {
       return Response.json(
@@ -63,7 +61,7 @@ export async function PUT(request: NextRequest, context: RouteParams) {
     }
 
     const body = await request.json();
-    const { title, content, tags ,images} = body;
+    const { title, content, tags, images } = body;
 
     if (!title?.trim() || !content?.trim()) {
       return Response.json(
@@ -103,43 +101,21 @@ export async function DELETE(request: NextRequest, context: RouteParams) {
     const postId = params.id;
     const userId = session.user.id;
 
-    // 检查帖子是否存在且是否为作者
-    const posts = await client.query(
-      `
-      select community::Post {
-        id,
-        author: { id }
-      }
-      filter .id = <uuid>$postId and .author.id = <uuid>$userId
-      limit 1
-      `,
-      { postId, userId }
-    );
+    const post = await prisma.post.findFirst({
+      where: {
+        id: postId,
+        authorId: userId,
+      },
+      select: { id: true },
+    });
 
-    if (!posts.length) {
+    if (!post) {
       throw new ApiError('帖子不存在或无权限删除', 403);
     }
 
-    // 删除帖子及其关联数据
-    await client.query(
-      `
-      # 先解除帖子对评论的引用
-      update community::Post
-      filter .id = <uuid>$postId
-      set {
-        comments := {}
-      };
-      
-      # 再删除所有关联的评论
-      delete community::Comment
-      filter .post.id = <uuid>$postId;
-      
-      # 最后删除帖子
-      delete community::Post
-      filter .id = <uuid>$postId and .author.id = <uuid>$userId;
-      `,
-      { postId, userId }
-    );
+    await prisma.post.delete({
+      where: { id: postId },
+    });
 
     return Response.json({ code: 0, message: '删除成功' });
   } catch (error) {

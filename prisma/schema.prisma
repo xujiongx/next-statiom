@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+enum PostStatus {
+  Draft
+  Published
+  Archived
+}
+
+enum ActivityType {
+  Post
+  Comment
+  Like
+  Follow
+}
+
+enum NotificationType {
+  Like
+  Comment
+  Mention
+  Follow
+  System
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  nickname     String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  wechatOpenId String?  @unique @map("wechat_open_id")
+  avatar       String?
+
+  conversations         Conversation[]
+  scheduledTasks        ScheduledTask[]
+  favorites             Favorite[]
+  posts                 Post[]
+  comments              Comment[]
+  postLikes             PostLike[]
+  commentLikes          CommentLike[]
+  activities            Activity[]
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+  followers             UserFollow[]   @relation("Following")
+  following             UserFollow[]   @relation("Follower")
+
+  @@map("users")
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  title     String
+  sessionId String   @unique @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  content        String
+  role           String
+  timestamp      DateTime
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model ScheduledTask {
+  id             String    @id @default(uuid())
+  name           String
+  cronExpression String    @map("cron_expression")
+  handler        String
+  isActive       Boolean   @default(true) @map("is_active")
+  lastRun        DateTime? @map("last_run")
+  nextRun        DateTime? @map("next_run")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("scheduled_tasks")
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  url       String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("images")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  category  String
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("favorites")
+}
+
+model Post {
+  id        String     @id @default(uuid())
+  title     String     @db.VarChar(200)
+  content   String
+  tags      String[]
+  images    Json?
+  viewCount Int        @default(0) @map("view_count")
+  status    PostStatus @default(Published)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime?  @map("updated_at")
+  authorId  String     @map("author_id")
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     PostLike[]
+  activities Activity[]
+  notifications Notification[]
+  topics    Topic[]    @relation("TopicPosts")
+
+  @@map("posts")
+}
+
+model PostLike {
+  postId String @map("post_id")
+  userId String @map("user_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@map("post_likes")
+}
+
+model Comment {
+  id              String        @id @default(uuid())
+  content         String
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime?     @map("updated_at")
+  authorId        String        @map("author_id")
+  postId          String        @map("post_id")
+  parentCommentId String?       @map("parent_comment_id")
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentComment   Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  replies         Comment[]     @relation("CommentReplies")
+  likes           CommentLike[]
+  activities      Activity[]
+  notifications   Notification[]
+
+  @@map("comments")
+}
+
+model CommentLike {
+  commentId String  @map("comment_id")
+  userId    String  @map("user_id")
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@map("comment_likes")
+}
+
+model Activity {
+  id        String       @id @default(uuid())
+  type      ActivityType
+  createdAt DateTime     @default(now()) @map("created_at")
+  userId    String       @map("user_id")
+  postId    String?      @map("post_id")
+  commentId String?      @map("comment_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?        @relation(fields: [postId], references: [id], onDelete: SetNull)
+  comment   Comment?     @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  @@map("activities")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  type        NotificationType
+  content     String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  recipientId String           @map("recipient_id")
+  actorId     String?          @map("actor_id")
+  postId      String?          @map("post_id")
+  commentId   String?          @map("comment_id")
+  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: SetNull)
+  comment     Comment?         @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  postCount   Int      @default(0) @map("post_count")
+  posts       Post[]   @relation("TopicPosts")
+
+  @@map("topics")
+}
+
+model UserFollow {
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("user_follows")
+}

@@ -1,14 +1,10 @@
 import { UploadedImage } from '@/components/ui/image-upload';
 import { getServerSession } from '@/lib/auth';
-import { client } from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { ApiError } from '@/lib/error';
 import { MyComment, Post } from '@/types/community';
+import { Prisma } from '@prisma/client';
 
-interface QueryResult {
-  total: number;
-  comments: MyComment[];
-}
-// 帖子相关接口
 interface CreatePostParams {
   title: string;
   content: string;
@@ -26,7 +22,6 @@ interface PostFilter {
   userId?: string;
 }
 
-// 评论相关接口
 interface CreateCommentParams {
   postId: string;
   content: string;
@@ -34,7 +29,6 @@ interface CreateCommentParams {
   parentId?: string;
 }
 
-// 点赞相关接口
 interface LikeParams {
   postId: string;
   userId: string;
@@ -46,11 +40,92 @@ interface UpdatePostParams {
   title: string;
   content: string;
   tags: string[];
-  images?: UploadedImage[]; // 新增 images 字段
+  images?: UploadedImage[];
+}
+
+type PostWithRelations = Prisma.PostGetPayload<{
+  include: {
+    author: { select: { id: true; username: true; nickname: true } };
+    _count: { select: { comments: true; likes: true } };
+    comments: {
+      include: {
+        author: { select: { id: true; username: true; nickname: true } };
+      };
+    };
+    likes: { select: { userId: true } };
+  };
+}>;
+
+type CommentWithRelations = Prisma.CommentGetPayload<{
+  include: {
+    author: { select: { id: true; username: true; nickname: true } };
+    parentComment: {
+      include: {
+        author: { select: { id: true; username: true; nickname: true } };
+      };
+    };
+  };
+}>;
+
+function parseImages(images: unknown): UploadedImage[] {
+  if (!images) return [];
+  if (typeof images === 'string') {
+    try {
+      return JSON.parse(images) as UploadedImage[];
+    } catch {
+      return [];
+    }
+  }
+  return images as UploadedImage[];
+}
+
+function mapAuthor(author: { id: string; username: string; nickname: string }) {
+  return {
+    id: author.id,
+    nickname: author.nickname,
+    image: '',
+  };
+}
+
+function mapComment(comment: CommentWithRelations): MyComment {
+  return {
+    id: comment.id,
+    content: comment.content,
+    created_at: comment.createdAt.toISOString(),
+    author: mapAuthor(comment.author),
+    parent_comment: comment.parentComment
+      ? {
+          id: comment.parentComment.id,
+          content: comment.parentComment.content,
+          created_at: comment.parentComment.createdAt.toISOString(),
+          author: mapAuthor(comment.parentComment.author),
+        }
+      : undefined,
+  };
+}
+
+function mapPostListItem(post: PostWithRelations, userId?: string) {
+  const latestComment = post.comments[0];
+
+  return {
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    tags: post.tags,
+    images: parseImages(post.images),
+    created_at: post.createdAt.toISOString(),
+    view_count: post.viewCount,
+    author: mapAuthor(post.author),
+    comment_count: post._count.comments,
+    like_count: post._count.likes,
+    is_liked: userId ? post.likes.some((like) => like.userId === userId) : false,
+    new_comment: latestComment ? mapComment(latestComment as CommentWithRelations) : undefined,
+    comments: [],
+    likes: [],
+  };
 }
 
 export class CommunityService {
-  // 创建新帖子
   async createPost(params: CreatePostParams) {
     const { title, content, tags = [], images = [], userId } = params;
 
@@ -67,59 +142,52 @@ export class CommunityService {
     }
 
     try {
-      // 修复查询语法，使用 <uuid> 类型转换而不是 <str>
-      const posts = await client.query(
-        `
-        with 
-          user := (select User filter .id = <uuid>$userId limit 1),
-          post := (
-            insert community::Post {
-              title := <str>$title,
-              content := <str>$content,
-              tags := <array<str>>$tags,
-              images := <json>$images,
-              author := user
-            }
-          )
-        select post {
-          id,
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+
+      if (!user) {
+        throw new ApiError('用户不存在', 404);
+      }
+
+      const post = await prisma.post.create({
+        data: {
           title,
           content,
           tags,
-          created_at,
+          images: images as unknown as Prisma.InputJsonValue,
+          authorId: userId,
+        },
+        include: {
           author: {
-            id,
-            username,
-            nickname
-          }
-        }
-        `,
-        { title, content, tags, images: JSON.stringify(images), userId }
-      );
+            select: { id: true, username: true, nickname: true },
+          },
+        },
+      });
 
-      if (!posts.length) {
-        throw new ApiError('创建帖子失败', 500);
-      }
-
-      return posts[0];
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        tags: post.tags,
+        created_at: post.createdAt.toISOString(),
+        author: post.author,
+      };
     } catch (error) {
       console.error('创建帖子错误:', error);
       if (error instanceof ApiError) {
         throw error;
       }
-      // 处理EdgeDB特定错误
-      if (error instanceof Error) {
-        if (error.message.includes('InvalidReferenceError')) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
           throw new ApiError('用户不存在或ID格式错误', 400);
-        } else if (error.message.includes('NoDataError')) {
-          throw new ApiError('用户不存在', 404);
         }
       }
       throw new ApiError('创建帖子失败', 500);
     }
   }
 
-  // 获取帖子列表
   async getPosts(filter: PostFilter = {}) {
     const {
       tag,
@@ -130,147 +198,62 @@ export class CommunityService {
       userId,
     } = filter;
 
-    console.log('🕵️‍♂️', filter);
     const offset = (page - 1) * limit;
 
-    // 修改参数传递方式
-    const params: Record<string, unknown> = {
-      offset,
-      limit,
-      ...(userId && { userId }),
-      ...(tag && { tag }),
-      ...(authorId && { authorId }),
-    };
-
-    const filterConditions: string[] = [];
+    const where: Prisma.PostWhereInput = {};
     if (tag) {
-      filterConditions.push('contains(.tags, <str>$tag)');
+      where.tags = { has: tag };
     }
     if (authorId) {
-      filterConditions.push('.author.id = <uuid>$authorId');
+      where.authorId = authorId;
     }
-    // 修改点赞筛选逻辑
     if (sortBy === 'following' && userId) {
-      filterConditions.push('<uuid>$userId in .likes.id');
+      where.likes = { some: { userId } };
     }
 
-    const filterClause = filterConditions.length
-      ? ` filter ${filterConditions.join(' and ')}`
-      : '';
-
-    // 修改排序逻辑
-    const orderClause =
-      sortBy === 'popular'
-        ? ' order by (count(.likes) * 2 + count(.comments) * 3 + .view_count) desc then .created_at desc'
-        : ' order by .created_at desc';
-
-    const query = `
-      with post := (
-        select community::Post {
-          id,
-          title,
-          content,
-          tags,
-          images,
-          created_at,
-          view_count,
-          author: {
-            id,
-            username,
-            nickname,
-          },
-          comments: { id },
-          likes: { id },
-          score := (
-            count(.likes) * 2 +
-            count(.comments) * 3 +
-            .view_count
-          )
-        }${filterClause}${orderClause}
-        offset <int64>$offset
-        limit <int64>$limit
-      )
-      select post {
-        id,
-        title,
-        content,
-        tags,
-        images,
-        created_at,
-        view_count,
-        author: {
-          id,
-          username,
-          nickname,
+    const include = {
+      author: { select: { id: true, username: true, nickname: true } },
+      _count: { select: { comments: true, likes: true } },
+      comments: {
+        take: 1,
+        orderBy: { createdAt: 'desc' as const },
+        include: {
+          author: { select: { id: true, username: true, nickname: true } },
         },
-        comment_count := count(.comments),
-        new_comment := (
-          select .comments {
-            id,
-            content,
-            created_at,
-            author: {
-              id,
-              username,
-              nickname
-            }
-          } 
-          order by .created_at desc
-          limit 1
-        ),
-        like_count := count(.likes),
-        is_liked := <bool>(exists (
-          select .likes filter .id = <uuid>$userId
-        ))
-      }
-    `;
+      },
+      likes: {
+        select: { userId: true },
+      },
+    };
 
     try {
-      const posts = (await client.query(query, params)) as Post[];
+      let posts: PostWithRelations[];
 
-      // 解析每个帖子的 images 字段
-      for (const post of posts) {
-        if (post.images && typeof post.images === 'string') {
-          try {
-            post.images = JSON.parse(post.images);
-          } catch (e) {
-            console.error('解析帖子图片数据失败:', e);
-            post.images = [];
-          }
-        }
+      if (sortBy === 'popular') {
+        const allPosts = await prisma.post.findMany({ where, include });
+        allPosts.sort((a, b) => {
+          const scoreA = a._count.likes * 2 + a._count.comments * 3 + a.viewCount;
+          const scoreB = b._count.likes * 2 + b._count.comments * 3 + b.viewCount;
+          return (
+            scoreB - scoreA ||
+            b.createdAt.getTime() - a.createdAt.getTime()
+          );
+        });
+        posts = allPosts.slice(offset, offset + limit);
+      } else {
+        posts = await prisma.post.findMany({
+          where,
+          include,
+          orderBy: { createdAt: 'desc' },
+          skip: offset,
+          take: limit,
+        });
       }
 
-      // 修改计数查询和参数
-      const countQuery = `
-        with post := (
-          select community::Post {
-            id
-          }${filterClause}
-        )
-        select count(post)
-      `;
-
-      // 只传递过滤条件需要的参数
-      const countParams: Record<string, unknown> = {};
-      if (tag) {
-        countParams.tag = tag;
-      }
-      if (authorId) {
-        countParams.authorId = authorId;
-      }
-      if (sortBy === 'following' && userId) {
-        countParams.userId = userId;
-      }
-
-      const countResult = await client.query(
-        countQuery,
-        Object.keys(countParams).length > 0 ? countParams : undefined
-      );
-
-      const total = (countResult[0] || 0) as number;
+      const total = await prisma.post.count({ where });
 
       return {
-        posts,
+        posts: posts.map((post) => mapPostListItem(post, userId)),
         pagination: {
           page,
           limit,
@@ -284,91 +267,59 @@ export class CommunityService {
     }
   }
 
-  // 获取单个帖子详情
   async getPostById(postId: string) {
     const session = await getServerSession();
-    console.log('👩', session?.user?.id);
     const userId = session?.user?.id;
 
     try {
-      const posts = await client.query(
-        `
-        select community::Post {
-          id,
-          title,
-          content,
-          tags,
-          images,
-          created_at,
-          updated_at,
-          view_count,
-          author: {
-            id,
-            username,
-            nickname,
-          },
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        include: {
+          author: { select: { id: true, username: true, nickname: true } },
           comments: {
-            id,
-            content,
-            created_at,
-            author: {
-              id,
-              username,
-              nickname,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              author: { select: { id: true, username: true, nickname: true } },
+              parentComment: {
+                include: {
+                  author: { select: { id: true, username: true, nickname: true } },
+                },
+              },
             },
-            parent_comment: {
-              id,
-              author: {
-                id,
-                username,
-                nickname
-              }
-            }
-          } order by .created_at desc,
-          likes: {
-            id
           },
-          like_count := count(.likes),
-          is_liked := <bool>(
-          exists (
-            select .likes filter .id = <uuid>$userId
-          )
-        )
-        }
-        filter .id = <uuid>$postId
-        limit 1
-        `,
-        { postId, userId }
-      );
+          likes: { select: { userId: true } },
+          _count: { select: { likes: true } },
+        },
+      });
 
-      if (!posts.length) {
+      if (!post) {
         throw new ApiError('帖子不存在', 404);
       }
 
-      // 增加浏览量
-      await client.query(
-        `
-        update community::Post 
-        filter .id = <uuid>$postId
-        set {
-          view_count := .view_count + 1
-        }
-        `,
-        { postId }
-      );
+      await prisma.post.update({
+        where: { id: postId },
+        data: { viewCount: { increment: 1 } },
+      });
 
-      // 解析 images 字段
-      const post = posts[0] as Post;
-      if (post.images && typeof post.images === 'string') {
-        try {
-          post.images = JSON.parse(post.images);
-        } catch (e) {
-          console.error('解析帖子图片数据失败:', e);
-          post.images = [];
-        }
-      }
-
-      return post;
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        tags: post.tags,
+        images: parseImages(post.images),
+        created_at: post.createdAt.toISOString(),
+        updated_at: post.updatedAt?.toISOString(),
+        view_count: post.viewCount + 1,
+        author: mapAuthor(post.author),
+        comments: post.comments.map((comment) => mapComment(comment)),
+        likes: post.likes,
+        like_count: post._count.likes,
+        is_liked: userId ? post.likes.some((like) => like.userId === userId) : false,
+        comment_count: post.comments.length,
+        new_comment: post.comments[0]
+          ? mapComment(post.comments[0])
+          : undefined,
+      } as Post;
     } catch (error) {
       console.error('获取帖子详情错误:', error);
       if (error instanceof ApiError) {
@@ -378,7 +329,6 @@ export class CommunityService {
     }
   }
 
-  // 添加评论
   async createComment(params: CreateCommentParams) {
     const { postId, content, userId, parentId } = params;
 
@@ -387,243 +337,137 @@ export class CommunityService {
     }
 
     try {
-      const query = `
-        with 
-          user := (select default::User filter .id = <uuid>$userId limit 1),
-          post := (select community::Post filter .id = <uuid>$postId limit 1),
-          comment := (
-            insert community::Comment {
-              content := <str>$content,
-              author := user,
-              post := post
-              ${
-                parentId
-                  ? ', parent_comment := (select detached community::Comment filter .id = <uuid>$parentId limit 1)'
-                  : ''
-              }
-            }
-          )
-        select (
-          update post
-          set {
-            comments += comment
-          }
-        ) {
-          comments: {
-            id,
-            content,
-            created_at,
-            author: {
-              id,
-              username,
-              nickname
-            },
-            parent_comment: {
-              id,
-              author: {
-                id,
-                username,
-                nickname
-              },
-              content,
-              created_at,
-            }
-          } filter .id = comment.id
-        }
-      `;
+      const [user, post] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
+        prisma.post.findUnique({ where: { id: postId }, select: { id: true } }),
+      ]);
 
-      const result: { comments: MyComment[] }[] = await client.query(query, {
-        postId,
-        content,
-        userId,
-        ...(parentId && { parentId }),
-      });
-
-      if (!result.length || !result[0].comments.length) {
-        throw new ApiError('添加评论失败', 500);
+      if (!user || !post) {
+        throw new ApiError('用户或帖子不存在', 400);
       }
 
-      return result[0].comments[0];
+      const comment = await prisma.comment.create({
+        data: {
+          content,
+          authorId: userId,
+          postId,
+          parentCommentId: parentId,
+        },
+        include: {
+          author: { select: { id: true, username: true, nickname: true } },
+          parentComment: {
+            include: {
+              author: { select: { id: true, username: true, nickname: true } },
+            },
+          },
+        },
+      });
+
+      return mapComment(comment);
     } catch (error) {
       console.error('添加评论错误:', error);
       if (error instanceof ApiError) {
         throw error;
       }
-      if (error instanceof Error) {
-        if (error.message.includes('InvalidReferenceError')) {
-          throw new ApiError('用户或帖子不存在', 400);
-        }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new ApiError('用户或帖子不存在', 400);
       }
       throw new ApiError('添加评论失败', 500);
     }
   }
 
-  // 点赞/取消点赞
   async toggleLike(params: LikeParams) {
     const { postId, userId } = params;
 
     try {
-      // 检查是否已点赞
-      const existingLikes: { id: string; has_liked: boolean }[] =
-        await client.query(
-          `
-        select community::Post {
-          id,
-          has_liked := <uuid>$userId in .likes.id
-        }
-        filter .id = <uuid>$postId
-        limit 1
-        `,
-          { postId, userId }
-        );
+      const existingLike = await prisma.postLike.findUnique({
+        where: {
+          postId_userId: { postId, userId },
+        },
+      });
 
-      if (existingLikes.length > 0 && existingLikes[0]?.has_liked) {
-        // 已点赞，取消点赞
-        await client.query(
-          `
-          update community::Post
-          filter .id = <uuid>$postId
-          set {
-            likes -= (
-              select default::User
-              filter .id = <uuid>$userId
-            )
-          }
-          `,
-          { postId, userId }
-        );
+      if (existingLike) {
+        await prisma.postLike.delete({
+          where: {
+            postId_userId: { postId, userId },
+          },
+        });
         return { liked: false };
-      } else {
-        // 未点赞，添加点赞
-        const result = await client.query(
-          `
-          update community::Post
-          filter .id = <uuid>$postId
-          set {
-            likes += (
-              select default::User
-              filter .id = <uuid>$userId
-            )
-          }
-          `,
-          { postId, userId }
-        );
-
-        if (!result.length) {
-          throw new ApiError('点赞失败', 500);
-        }
-
-        return { liked: true };
       }
+
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true },
+      });
+
+      if (!post) {
+        throw new ApiError('帖子不存在', 404);
+      }
+
+      await prisma.postLike.create({
+        data: { postId, userId },
+      });
+
+      return { liked: true };
     } catch (error) {
       console.error('点赞操作错误:', error);
       if (error instanceof ApiError) {
         throw error;
       }
-      // 处理EdgeDB特定错误
-      if (error instanceof Error) {
-        if (error.message.includes('InvalidReferenceError')) {
-          throw new ApiError('用户或帖子不存在', 400);
-        }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new ApiError('用户或帖子不存在', 400);
       }
       throw new ApiError('操作失败', 500);
     }
   }
 
-  // 获取热门标签
   async getPopularTags(limit: number = 10) {
     try {
-      const tags = await client.query(
-        `
-        select (
-          with 
-            all_tags := (
-              select array_unpack(community::Post.tags)
-            ),
-            distinct_tags := (
-              select distinct all_tags
-            )
-          for tag in distinct_tags
-          union (
-            select {
-              name := tag,
-              count := count(all_tags filter all_tags = tag)
-            }
-          )
-        )
-        order by .count desc
-        limit <int64>$limit
-        `,
-        { limit }
-      );
+      const posts = await prisma.post.findMany({
+        select: { tags: true },
+      });
 
-      return tags;
+      const tagCounts = new Map<string, number>();
+      for (const post of posts) {
+        for (const tag of post.tags) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+
+      return Array.from(tagCounts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, limit);
     } catch (error) {
       console.error('获取热门标签错误:', error);
       throw new ApiError('获取热门标签失败', 500);
     }
   }
 
-  // 获取帖子评论
   async getPostComments(postId: string, page: number = 1, limit: number = 10) {
     try {
       const offset = (page - 1) * limit;
 
-      const result = await client.query<QueryResult>(
-        `
-        with post := (
-          select community::Post 
-          filter .id = <uuid>$postId
-          limit 1
-        )
-        select {
-          total := count(post.comments),
-          comments := (
-            select post.comments {
-              id,
-              content,
-              created_at,
-              author: {
-                id,
-                username,
-                nickname
+      const [total, comments] = await Promise.all([
+        prisma.comment.count({ where: { postId } }),
+        prisma.comment.findMany({
+          where: { postId },
+          orderBy: { createdAt: 'desc' },
+          skip: offset,
+          take: limit,
+          include: {
+            author: { select: { id: true, username: true, nickname: true } },
+            parentComment: {
+              include: {
+                author: { select: { id: true, username: true, nickname: true } },
               },
-              parent_comment: {
-                id,
-                author: {
-                  id,
-                  username,
-                  nickname
-                },
-                content,
-                created_at
-              }
-            }
-            order by .created_at desc
-            offset <int64>$offset
-            limit <int64>$limit
-          )
-        }
-        `,
-        { postId, offset, limit }
-      );
-
-      if (!result.length) {
-        return {
-          comments: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
+            },
           },
-        };
-      }
-
-      const { comments, total } = result[0];
+        }),
+      ]);
 
       return {
-        comments,
+        comments: comments.map((comment) => mapComment(comment)),
         pagination: {
           page,
           limit,
@@ -639,92 +483,64 @@ export class CommunityService {
       throw new ApiError('获取帖子评论失败', 500);
     }
   }
-  // 获取社区统计数据
+
   async getCommunityStats() {
     try {
-      // 获取一周前的日期
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-      // 直接传递 Date 对象，而不是转换为字符串
-      const stats = await client.query(
-        `
-        with
-          total_users := (select count(default::User)),
-          total_posts := (select count(community::Post)),
-          active_users_this_week := (
-            select count(
-              distinct community::Post.author.id
-            )
-              filter community::Post.created_at >= <datetime>$oneWeekAgo
-          )
-        select {
-          total_users := total_users,
-          total_posts := total_posts,
-          active_users_this_week := active_users_this_week
-        }
-      `,
-        { oneWeekAgo }
-      );
+      const [totalUsers, totalPosts, activeUsersThisWeek] = await Promise.all([
+        prisma.user.count(),
+        prisma.post.count(),
+        prisma.post.findMany({
+          where: { createdAt: { gte: oneWeekAgo } },
+          select: { authorId: true },
+          distinct: ['authorId'],
+        }),
+      ]);
 
-      return stats[0];
+      return {
+        total_users: totalUsers,
+        total_posts: totalPosts,
+        active_users_this_week: activeUsersThisWeek.length,
+      };
     } catch (error) {
       console.error('获取社区统计数据错误:', error);
       throw new ApiError('获取社区统计数据失败', 500);
     }
   }
+
   async updatePost(params: UpdatePostParams) {
     const { postId, userId, title, content, tags, images } = params;
 
     try {
-      // 检查帖子是否存在且属于当前用户
-      const existingPost: Post[] = await client.query(
-        `
-      select community::Post {
-        id,
-        author: { id }
-      }
-      filter .id = <uuid>$postId
-      limit 1
-      `,
-        { postId }
-      );
+      const existingPost = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true, authorId: true },
+      });
 
-      if (!existingPost.length) {
+      if (!existingPost) {
         throw new ApiError('帖子不存在', 404);
       }
 
-      if (existingPost[0].author.id !== userId) {
+      if (existingPost.authorId !== userId) {
         throw new ApiError('无权限修改此帖子', 403);
       }
 
-      // 更新帖子
-      const result = await client.query(
-        `
-      update community::Post
-      filter .id = <uuid>$postId
-      set {
-        title := <str>$title,
-        content := <str>$content,
-        tags := <array<str>>$tags,
-        ${images !== undefined ? 'images := <json>$images,' : ''}
-        updated_at := datetime_current()
-      }
-      `,
-        {
-          postId,
+      const result = await prisma.post.update({
+        where: { id: postId },
+        data: {
           title,
           content,
           tags,
-          ...(images !== undefined && { images: JSON.stringify(images) }),
-        }
-      );
+          ...(images !== undefined && {
+            images: images as unknown as Prisma.InputJsonValue,
+          }),
+          updatedAt: new Date(),
+        },
+      });
 
-      if (!result.length) {
-        throw new ApiError('更新帖子失败', 500);
-      }
-
-      return result[0];
+      return result;
     } catch (error) {
       console.error('更新帖子错误:', error);
       if (error instanceof ApiError) {

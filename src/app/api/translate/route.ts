@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandler } from '@/lib/api';
-import { Mistral, SDKOptions } from '@mistralai/mistralai';
 import { config } from '@/config';
-
-const mistralClient = new Mistral(process.env.MISTRAL_API_KEY as SDKOptions);
+import { mistralClient } from '@/lib/mistral';
 
 export const POST = (request: Request) => {
   return withErrorHandler(async () => {
